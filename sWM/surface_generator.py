@@ -109,6 +109,7 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3]):
         V[:, :] = V + laplace.affine[:3, 3].T
 
         nib.save(surf, out_surf_prefix + d_str + "mm.surf.gii")
+        print(f"saved {out_surf_prefix}{d_str}mm.surf.gii")
 
 
 if __name__ == "__main__":
