@@ -172,17 +172,17 @@ def compute_blurring(
                 os.path.join(workbench_path, "wb_command"),
                 "-volume-to-surface-mapping",
                 volumemap,
-                f"{tmp_dir}//swm//{hemi}_sfwm-{surf}.0mm.surf.gii",
-                f"{tmp_dir}//swm//{hemi}_{feat}_{resol}_{fwhm}sfwm-{surf}.0mm-metric.func.gii",
+                f"{tmp_dir}//swm//{hemi}_sfwm-{surf}mm.surf.gii",
+                f"{tmp_dir}//swm//{hemi}_{feat}_{resol}_{fwhm}sfwm-{surf}mm-metric.func.gii",
                 "-trilinear",
             ]
         )
         surfarr.append(
             [
                 load_gifti_data(
-                    f"{tmp_dir}//swm//{hemi}_{feat}_{resol}_{fwhm}sfwm-{surf}.0mm-metric.func.gii"
+                    f"{tmp_dir}//swm//{hemi}_{feat}_{resol}_{fwhm}sfwm-{surf}mm-metric.func.gii"
                 ),
-                load_gifti_data(f"{tmp_dir}//swm//{hemi}_sfwm-{surf}.0mm.surf.gii"),
+                load_gifti_data(f"{tmp_dir}//swm//{hemi}_sfwm-{surf}mm.surf.gii"),
             ]
         )
 
