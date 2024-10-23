@@ -198,6 +198,7 @@ def compute_blurring(
         if e == len(surfarr) - 1:
             break
         nextdata, nextsurt = surfarr[e + 1]
+        print(e)
         distance = calcdist(surf, nextsurt)
 
         distances[:, e] = distance
