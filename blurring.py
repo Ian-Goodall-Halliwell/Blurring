@@ -101,7 +101,7 @@ def compute_blurring(
     )
 
     temp_parc_path = os.path.join(tmp_dir, f"{hemi}_surf-fsnative_label-temp.nii.gz")
-
+    print(temp_parc_path)
     output_path = os.path.join(tmp_dir, f"laplace{hemi}.nii.gz")
     # img = ants.image_read(freesurfer_path)
     # imgfixed = ants.image_read(f"{input_dir}/{bids_id}_space-nativepro_map-T1map.nii.gz")
@@ -139,7 +139,7 @@ def compute_blurring(
             f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.surf.gii",
             output_path,
             f"{tmp_dir}//swm//{hemi}_sfwm-",
-            [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
+            [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
         )
 
     wmBoundaryDataArr = load_gifti_data(
@@ -166,7 +166,7 @@ def compute_blurring(
         volumemap = f"{input_dir}/maps/{bids_id}_space-nativepro_map-{feat}.nii.gz"
     else:
         volumemap = f"{input_dir}/maps/{bids_id}_space-nativepro_model-DTI_map-{feat.upper()}.nii.gz"
-    for surf in [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]:
+    for surf in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]:
         subprocess.run(
             [
                 os.path.join(workbench_path, "wb_command"),
