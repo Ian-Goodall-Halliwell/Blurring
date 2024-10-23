@@ -8,7 +8,8 @@ import ants
 from ants.ops import resample_image_to_target
 import scipy
 
-def fixmatrix(path, inputmap, outputmap,basemap, BIDS_ID, temppath, wb_path, mat_path):
+
+def fixmatrix(path, inputmap, outputmap, basemap, BIDS_ID, temppath, wb_path, mat_path):
     # Load the .mat file
     mat = scipy.io.loadmat(
         os.path.join(
@@ -49,7 +50,7 @@ def fixmatrix(path, inputmap, outputmap,basemap, BIDS_ID, temppath, wb_path, mat
         inputmap,
         basemap,
         "ENCLOSING_VOXEL",
-        outputmap, 
+        outputmap,
         "-affine",
         os.path.join(temppath, "real_world_affine.txt"),
     ]
@@ -76,7 +77,6 @@ def computegrad(data, dists):
     return np.divide(data, dists)
 
 
-
 def compute_blurring(
     input_dir,
     surf_dir,
@@ -87,21 +87,19 @@ def compute_blurring(
     resol,
     fwhm,
     tmp_dir,
-    fs_path
+    fs_path,
 ):
 
     base_path = input_dir
     for _ in range(4):  # Adjust the range to navigate up the desired number of levels
         base_path, _ = os.path.split(base_path)
 
-
     micapipe_path = os.path.split(input_dir)[0]
 
     freesurfer_path = os.path.join(
         base_path, "freesurfer", bids_id, "mri", "aparc+aseg.nii.gz"
     )
-    
-    
+
     temp_parc_path = os.path.join(tmp_dir, f"{hemi}_surf-fsnative_label-temp.nii.gz")
 
     output_path = os.path.join(tmp_dir, f"laplace{hemi}.nii.gz")
@@ -119,11 +117,20 @@ def compute_blurring(
                 os.path.join(tmp_dir, f"{hemi}_surf-fsnative_label-temp-fixed.nii.gz"),
             ]
         )
-        freesurfer_path = os.path.join(tmp_dir, f"{hemi}_surf-fsnative_label-temp-fixed.nii.gz")
+        freesurfer_path = os.path.join(
+            tmp_dir, f"{hemi}_surf-fsnative_label-temp-fixed.nii.gz"
+        )
     if not os.path.exists(temp_parc_path):
-        fixmatrix(path=input_dir, BIDS_ID=bids_id, 
-                  temppath=tmp_dir, wb_path=workbench_path, inputmap=freesurfer_path, outputmap=temp_parc_path, basemap=f"{input_dir}/maps/{bids_id}_space-nativepro_map-T1map.nii.gz",
-                  mat_path="from-fsnative_to_nativepro_T1w_0GenericAffine")
+        fixmatrix(
+            path=input_dir,
+            BIDS_ID=bids_id,
+            temppath=tmp_dir,
+            wb_path=workbench_path,
+            inputmap=freesurfer_path,
+            outputmap=temp_parc_path,
+            basemap=f"{input_dir}/maps/{bids_id}_space-nativepro_map-T1map.nii.gz",
+            mat_path="from-fsnative_to_nativepro_T1w_0GenericAffine",
+        )
 
         if not os.path.exists(os.path.join(tmp_dir, "swm")):
             os.mkdir(os.path.join(tmp_dir, "swm"))
@@ -170,16 +177,20 @@ def compute_blurring(
                 "-trilinear",
             ]
         )
-        surfarr.append([
-            load_gifti_data(f"{tmp_dir}//swm//{hemi}_{feat}_{resol}_{fwhm}sfwm-{surf}.0mm-metric.func.gii"),
-            load_gifti_data(f"{tmp_dir}//swm//{hemi}_sfwm-{surf}.0mm.surf.gii")
-            ])
-    
-
+        surfarr.append(
+            [
+                load_gifti_data(
+                    f"{tmp_dir}//swm//{hemi}_{feat}_{resol}_{fwhm}sfwm-{surf}.0mm-metric.func.gii"
+                ),
+                load_gifti_data(f"{tmp_dir}//swm//{hemi}_sfwm-{surf}.0mm.surf.gii"),
+            ]
+        )
 
     distances = np.zeros(shape=(len(midthicknessDataArr), len(surfarr) - 1))
     dataArr = np.zeros(shape=(len(midthicknessDataArr), len(surfarr)))
-    dataArr_nonmode = np.zeros(shape=(len(midthicknessDataArr), len(surfarr)), dtype=np.float32)
+    dataArr_nonmode = np.zeros(
+        shape=(len(midthicknessDataArr), len(surfarr)), dtype=np.float32
+    )
     for e, ds in enumerate(surfarr):
         data, surf = ds
         dataArr[:, e] = np.divide(data, modeofboundary.mode[0])
@@ -206,8 +217,6 @@ def compute_blurring(
         data=blurring,
         intent="NIFTI_INTENT_NORMAL",
     )
-
-
 
     gii = nib.gifti.GiftiImage(darrays=[data_array])
     nib.save(
@@ -264,7 +273,6 @@ def compute_blurring(
             "CORTEX_LEFT" if hemi == "L" else "CORTEX_RIGHT",
         ]
     )
-
 
     data_non_grad = nib.gifti.gifti.GiftiDataArray(
         data=dataArr_nonmode,
@@ -327,13 +335,16 @@ def compute_blurring(
         ]
     )
 
-    return [os.path.join(
-        tmp_dir,
-        f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_grad-output.func.gii",
-    ), os.path.join(
-        tmp_dir,
-        f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad-output.func.gii",
-    )]
+    return [
+        os.path.join(
+            tmp_dir,
+            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_grad-output.func.gii",
+        ),
+        os.path.join(
+            tmp_dir,
+            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad-output.func.gii",
+        ),
+    ]
 
 
 if __name__ == "__main__":

@@ -1,30 +1,30 @@
-
 from blurring import compute_blurring
 import tempfile
 import os
+
 patients = {
-"PX001":[],
-"PX004":[],
-"PX005":[],
-"PX006":[],
-"PX007":[],
-"PX008":[],
-"PX010":[],
-"PX013":[],
-"PX015":[],
-"PX016":[],
-"PX021":[],
-"PX023":[],
-"PX026":[],
-"PX028":[],
-"PX029":[],
-"PX044":[],
-"PX047":[],
-"PX049":[],
-"PX051":[],
-"PX060":[],
-"PX069":[],
-"PX076":[]
+    "PX001": [],  #
+    "PX004": [],
+    "PX005": [],
+    "PX006": [],  #
+    "PX007": [],
+    "PX008": [],
+    "PX010": [],
+    "PX013": [],
+    "PX015": [],
+    "PX016": [],  #
+    "PX021": [],
+    "PX023": [],
+    "PX026": [],  #
+    "PX028": [],  #
+    "PX029": [],  #
+    "PX044": [],
+    "PX047": [],
+    "PX049": [],  #
+    "PX051": [],  #
+    "PX060": [],  #
+    "PX069": [],  #
+    "PX076": [],
 }
 workingdir = "/host/verges/tank/data/ian/blur"
 datadir = "/data/mica3/BIDS_MICs/derivatives"
@@ -53,20 +53,20 @@ for path in os.listdir(os.path.join(datadir, freesurfer)):
                 patients[px].append(path)
 
 # Convert the dictionary to a list of lists and sort each sublist
-patients = {patient:sorted(patients[patient]) for patient in patients}
-controls = {control:sorted(controls[control]) for control in controls}
-
+patients = {patient: sorted(patients[patient]) for patient in patients}
+controls = {control: sorted(controls[control]) for control in controls}
 
 
 with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
 
-
     for patient in patients:
         os.makedirs(os.path.join(workingdir, patient), exist_ok=True)
         for path in patients[patient]:
-        
+
             outputfile = compute_blurring(
-                input_dir=os.path.join(datadir, micapipe, path.split("_")[0], path.split("_")[1]),
+                input_dir=os.path.join(
+                    datadir, micapipe, path.split("_")[0], path.split("_")[1]
+                ),
                 surf_dir=os.path.join(datadir, freesurfer, path),
                 bids_id=path,
                 hemi="L",
@@ -75,12 +75,22 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
                 resol="32k",
                 fwhm=5,
                 tmp_dir=os.path.join(tmpdir),
-                fs_path=fs_path
+                fs_path=fs_path,
             )
-            os.rename(outputfile[0], os.path.join(workingdir, patient, f"{path}_L_T1map_blur_grad.func.gii"))
-            os.rename(outputfile[1], os.path.join(workingdir, patient, f"{path}_L_T1map_blur_NONgrad.func.gii"))
+            os.rename(
+                outputfile[0],
+                os.path.join(workingdir, patient, f"{path}_L_T1map_blur_grad.func.gii"),
+            )
+            os.rename(
+                outputfile[1],
+                os.path.join(
+                    workingdir, patient, f"{path}_L_T1map_blur_NONgrad.func.gii"
+                ),
+            )
             outputfile = compute_blurring(
-                input_dir=os.path.join(datadir, micapipe, path.split("_")[0], path.split("_")[1]),
+                input_dir=os.path.join(
+                    datadir, micapipe, path.split("_")[0], path.split("_")[1]
+                ),
                 surf_dir=os.path.join(datadir, freesurfer, path),
                 bids_id=path,
                 hemi="R",
@@ -89,10 +99,18 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
                 resol="32k",
                 fwhm=5,
                 tmp_dir=os.path.join(tmpdir),
-                fs_path=fs_path
+                fs_path=fs_path,
             )
-            os.rename(outputfile[0], os.path.join(workingdir, patient, f"{path}_R_T1map_blur_grad.func.gii"))
-            os.rename(outputfile[1], os.path.join(workingdir, patient, f"{path}_R_T1map_blur_NONgrad.func.gii"))
+            os.rename(
+                outputfile[0],
+                os.path.join(workingdir, patient, f"{path}_R_T1map_blur_grad.func.gii"),
+            )
+            os.rename(
+                outputfile[1],
+                os.path.join(
+                    workingdir, patient, f"{path}_R_T1map_blur_NONgrad.func.gii"
+                ),
+            )
             # compute_blurring(
             #     input_dir=os.path.join(datadir, micapipe, path.split("_")[0], path.split("_")[1]),
             #     surf_dir=os.path.join(datadir, freesurfer, path),
@@ -117,4 +135,4 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
             #     tmp_dir=os.path.join(tmpdir),
             #     fs_path=fs_path
             # )
-print('e')
+print("e")
