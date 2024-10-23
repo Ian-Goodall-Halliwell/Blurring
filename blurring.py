@@ -100,7 +100,9 @@ def compute_blurring(
         base_path, "freesurfer", bids_id, "mri", "aparc+aseg.nii.gz"
     )
 
-    temp_parc_path = os.path.join(tmp_dir, f"{hemi}_surf-fsnative_label-temp.nii.gz")
+    temp_parc_path = os.path.join(
+        tmp_dir, f"{bids_id}_{hemi}_surf-fsnative_label-temp.nii.gz"
+    )
     print(temp_parc_path)
     output_path = os.path.join(tmp_dir, f"laplace{hemi}.nii.gz")
     # img = ants.image_read(freesurfer_path)
