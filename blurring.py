@@ -285,6 +285,14 @@ def compute_blurring(
         ),
         index=False,
     )
+    distancesdf = pd.DataFrame(distances)
+    distancesdf.to_csv(
+        os.path.join(
+            tmp_dir,
+            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-distances.csv",
+        ),
+        index=False,
+    )
 
     data_non_grad = nib.gifti.gifti.GiftiDataArray(
         data=dataArr_nonmode,
@@ -359,6 +367,10 @@ def compute_blurring(
         os.path.join(
             tmp_dir,
             f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-intensities.csv",
+        ),
+        os.path.join(
+            tmp_dir,
+            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-distances.csv",
         ),
     ]
 
