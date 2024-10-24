@@ -63,67 +63,74 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
     for patient in controls:
         os.makedirs(os.path.join(workingdir, patient), exist_ok=True)
         for path in controls[patient]:
-
-            outputfile = compute_blurring(
-                input_dir=os.path.join(
-                    datadir, micapipe, path.split("_")[0], path.split("_")[1]
-                ),
-                surf_dir=os.path.join(datadir, freesurfer, path),
-                bids_id=path,
-                hemi="L",
-                feat="T1map",
-                workbench_path=wb_path,
-                resol="5k",
-                fwhm=5,
-                tmp_dir=os.path.join(tmpdir),
-                fs_path=fs_path,
-            )
-            os.rename(
-                outputfile[0],
-                os.path.join(
-                    workingdir, patient, f"{path}_L_T1map_blur_NONgrad.func.gii"
-                ),
-            )
-            os.rename(
-                outputfile[1],
-                os.path.join(
-                    workingdir, patient, f"{path}_L_T1map_blur_intensities.csv"
-                ),
-            )
-            os.rename(
-                outputfile[2],
-                os.path.join(workingdir, patient, f"{path}_L_T1map_blur_distances.csv"),
-            )
-            outputfile = compute_blurring(
-                input_dir=os.path.join(
-                    datadir, micapipe, path.split("_")[0], path.split("_")[1]
-                ),
-                surf_dir=os.path.join(datadir, freesurfer, path),
-                bids_id=path,
-                hemi="R",
-                feat="T1map",
-                workbench_path=wb_path,
-                resol="5k",
-                fwhm=5,
-                tmp_dir=os.path.join(tmpdir),
-                fs_path=fs_path,
-            )
-            os.rename(
-                outputfile[0],
-                os.path.join(
-                    workingdir, patient, f"{path}_R_T1map_blur_NONgrad.func.gii"
-                ),
-            )
-            os.rename(
-                outputfile[1],
-                os.path.join(
-                    workingdir, patient, f"{path}_R_T1map_blur_intensities.csv"
-                ),
-            )
-            os.rename(
-                outputfile[2],
-                os.path.join(workingdir, patient, f"{path}_R_T1map_blur_distances.csv"),
-            )
+            try:
+                outputfile = compute_blurring(
+                    input_dir=os.path.join(
+                        datadir, micapipe, path.split("_")[0], path.split("_")[1]
+                    ),
+                    surf_dir=os.path.join(datadir, freesurfer, path),
+                    bids_id=path,
+                    hemi="L",
+                    feat="T1map",
+                    workbench_path=wb_path,
+                    resol="5k",
+                    fwhm=5,
+                    tmp_dir=os.path.join(tmpdir),
+                    fs_path=fs_path,
+                )
+                os.rename(
+                    outputfile[0],
+                    os.path.join(
+                        workingdir, patient, f"{path}_L_T1map_blur_NONgrad.func.gii"
+                    ),
+                )
+                os.rename(
+                    outputfile[1],
+                    os.path.join(
+                        workingdir, patient, f"{path}_L_T1map_blur_intensities.csv"
+                    ),
+                )
+                os.rename(
+                    outputfile[2],
+                    os.path.join(
+                        workingdir, patient, f"{path}_L_T1map_blur_distances.csv"
+                    ),
+                )
+                outputfile = compute_blurring(
+                    input_dir=os.path.join(
+                        datadir, micapipe, path.split("_")[0], path.split("_")[1]
+                    ),
+                    surf_dir=os.path.join(datadir, freesurfer, path),
+                    bids_id=path,
+                    hemi="R",
+                    feat="T1map",
+                    workbench_path=wb_path,
+                    resol="5k",
+                    fwhm=5,
+                    tmp_dir=os.path.join(tmpdir),
+                    fs_path=fs_path,
+                )
+                os.rename(
+                    outputfile[0],
+                    os.path.join(
+                        workingdir, patient, f"{path}_R_T1map_blur_NONgrad.func.gii"
+                    ),
+                )
+                os.rename(
+                    outputfile[1],
+                    os.path.join(
+                        workingdir, patient, f"{path}_R_T1map_blur_intensities.csv"
+                    ),
+                )
+                os.rename(
+                    outputfile[2],
+                    os.path.join(
+                        workingdir, patient, f"{path}_R_T1map_blur_distances.csv"
+                    ),
+                )
+            except Exception as e:
+                print(e)
+                print(f"Error with {path}")
             # compute_blurring(
             #     input_dir=os.path.join(datadir, micapipe, path.split("_")[0], path.split("_")[1]),
             #     surf_dir=os.path.join(datadir, freesurfer, path),
