@@ -60,7 +60,7 @@ controls = {control: sorted(controls[control]) for control in controls}
 
 with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
 
-    for patient in patients:
+    for patient in controls:
         os.makedirs(os.path.join(workingdir, patient), exist_ok=True)
         for path in patients[patient]:
 
