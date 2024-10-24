@@ -80,22 +80,18 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
             )
             os.rename(
                 outputfile[0],
-                os.path.join(workingdir, patient, f"{path}_L_T1map_blur_grad.func.gii"),
-            )
-            os.rename(
-                outputfile[1],
                 os.path.join(
                     workingdir, patient, f"{path}_L_T1map_blur_NONgrad.func.gii"
                 ),
             )
             os.rename(
-                outputfile[2],
+                outputfile[1],
                 os.path.join(
                     workingdir, patient, f"{path}_L_T1map_blur_intensities.csv"
                 ),
             )
             os.rename(
-                outputfile[3],
+                outputfile[2],
                 os.path.join(workingdir, patient, f"{path}_L_T1map_blur_distances.csv"),
             )
             outputfile = compute_blurring(
@@ -114,22 +110,18 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
             )
             os.rename(
                 outputfile[0],
-                os.path.join(workingdir, patient, f"{path}_R_T1map_blur_grad.func.gii"),
-            )
-            os.rename(
-                outputfile[1],
                 os.path.join(
                     workingdir, patient, f"{path}_R_T1map_blur_NONgrad.func.gii"
                 ),
             )
             os.rename(
-                outputfile[2],
+                outputfile[1],
                 os.path.join(
                     workingdir, patient, f"{path}_R_T1map_blur_intensities.csv"
                 ),
             )
             os.rename(
-                outputfile[3],
+                outputfile[2],
                 os.path.join(workingdir, patient, f"{path}_R_T1map_blur_distances.csv"),
             )
             # compute_blurring(

@@ -305,12 +305,13 @@ def compute_blurring(
     data_fslr = nib.load(
         os.path.join(
             tmp_dir,
-            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_dist-output.func.gii",
+            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad-output.func.gii",
         )
     ).darrays
+    data_fslr = [x.data for x in data_fslr]
     print(data_fslr)
 
-    df = pd.DataFrame(dataArr_nonmode)
+    df = pd.DataFrame(data_fslr)
     df.to_csv(
         os.path.join(
             tmp_dir,
@@ -318,7 +319,16 @@ def compute_blurring(
         ),
         index=False,
     )
-    distancesdf = pd.DataFrame(distances)
+
+    data_dist = nib.load(
+        os.path.join(
+            tmp_dir,
+            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_dist-output.func.gii",
+        )
+    ).darrays
+    data_dist = [x.data for x in data_dist]
+
+    distancesdf = pd.DataFrame(data_dist)
     distancesdf.to_csv(
         os.path.join(
             tmp_dir,
@@ -328,10 +338,6 @@ def compute_blurring(
     )
 
     return [
-        os.path.join(
-            tmp_dir,
-            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_grad-output.func.gii",
-        ),
         os.path.join(
             tmp_dir,
             f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad-output.func.gii",
