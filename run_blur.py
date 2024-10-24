@@ -62,7 +62,7 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
 
     for patient in controls:
         os.makedirs(os.path.join(workingdir, patient), exist_ok=True)
-        for path in patients[patient]:
+        for path in controls[patient]:
 
             outputfile = compute_blurring(
                 input_dir=os.path.join(
