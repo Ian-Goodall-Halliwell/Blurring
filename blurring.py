@@ -268,7 +268,7 @@ def compute_blurring(
     )
 
     data_dist = nib.gifti.gifti.GiftiDataArray(
-        data=distances,
+        data=distances.astype(np.float32),
         intent="NIFTI_INTENT_NORMAL",
     )
     gii_dist = nib.gifti.GiftiImage(darrays=[data_dist])
@@ -309,6 +309,7 @@ def compute_blurring(
         )
     ).darrays
     print(data_fslr)
+
     df = pd.DataFrame(dataArr_nonmode)
     df.to_csv(
         os.path.join(
