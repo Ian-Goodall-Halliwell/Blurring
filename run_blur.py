@@ -1,6 +1,7 @@
 from blurring import compute_blurring
 import tempfile
 import os
+from joblib import Parallel, delayed
 
 patients = {
     "PX001": [],  #
@@ -58,101 +59,80 @@ patients = {patient: sorted(patients[patient]) for patient in patients}
 controls = {control: sorted(controls[control]) for control in controls}
 
 
-with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
+def process_path(
+    patient, path, workingdir, datadir, micapipe, freesurfer, wb_path, fs_path, tmpdir
+):
+    try:
+        outputfile = compute_blurring(
+            input_dir=os.path.join(
+                datadir, micapipe, path.split("_")[0], path.split("_")[1]
+            ),
+            surf_dir=os.path.join(datadir, freesurfer, path),
+            bids_id=path,
+            hemi="L",
+            feat="T1map",
+            workbench_path=wb_path,
+            resol="5k",
+            fwhm=5,
+            tmp_dir=tmpdir,
+            fs_path=fs_path,
+        )
+        os.rename(
+            outputfile[0],
+            os.path.join(workingdir, patient, f"{path}_L_T1map_blur_NONgrad.func.gii"),
+        )
+        os.rename(
+            outputfile[1],
+            os.path.join(workingdir, patient, f"{path}_L_T1map_blur_intensities.csv"),
+        )
+        os.rename(
+            outputfile[2],
+            os.path.join(workingdir, patient, f"{path}_L_T1map_blur_distances.csv"),
+        )
+        outputfile = compute_blurring(
+            input_dir=os.path.join(
+                datadir, micapipe, path.split("_")[0], path.split("_")[1]
+            ),
+            surf_dir=os.path.join(datadir, freesurfer, path),
+            bids_id=path,
+            hemi="R",
+            feat="T1map",
+            workbench_path=wb_path,
+            resol="5k",
+            fwhm=5,
+            tmp_dir=tmpdir,
+            fs_path=fs_path,
+        )
+        os.rename(
+            outputfile[0],
+            os.path.join(workingdir, patient, f"{path}_R_T1map_blur_NONgrad.func.gii"),
+        )
+        os.rename(
+            outputfile[1],
+            os.path.join(workingdir, patient, f"{path}_R_T1map_blur_intensities.csv"),
+        )
+        os.rename(
+            outputfile[2],
+            os.path.join(workingdir, patient, f"{path}_R_T1map_blur_distances.csv"),
+        )
+    except Exception as e:
+        print(e)
+        print(f"Error with {path}")
 
-    for patient in controls:
-        os.makedirs(os.path.join(workingdir, patient), exist_ok=True)
-        for path in controls[patient]:
-            try:
-                outputfile = compute_blurring(
-                    input_dir=os.path.join(
-                        datadir, micapipe, path.split("_")[0], path.split("_")[1]
-                    ),
-                    surf_dir=os.path.join(datadir, freesurfer, path),
-                    bids_id=path,
-                    hemi="L",
-                    feat="T1map",
-                    workbench_path=wb_path,
-                    resol="5k",
-                    fwhm=5,
-                    tmp_dir=os.path.join(tmpdir),
-                    fs_path=fs_path,
-                )
-                os.rename(
-                    outputfile[0],
-                    os.path.join(
-                        workingdir, patient, f"{path}_L_T1map_blur_NONgrad.func.gii"
-                    ),
-                )
-                os.rename(
-                    outputfile[1],
-                    os.path.join(
-                        workingdir, patient, f"{path}_L_T1map_blur_intensities.csv"
-                    ),
-                )
-                os.rename(
-                    outputfile[2],
-                    os.path.join(
-                        workingdir, patient, f"{path}_L_T1map_blur_distances.csv"
-                    ),
-                )
-                outputfile = compute_blurring(
-                    input_dir=os.path.join(
-                        datadir, micapipe, path.split("_")[0], path.split("_")[1]
-                    ),
-                    surf_dir=os.path.join(datadir, freesurfer, path),
-                    bids_id=path,
-                    hemi="R",
-                    feat="T1map",
-                    workbench_path=wb_path,
-                    resol="5k",
-                    fwhm=5,
-                    tmp_dir=os.path.join(tmpdir),
-                    fs_path=fs_path,
-                )
-                os.rename(
-                    outputfile[0],
-                    os.path.join(
-                        workingdir, patient, f"{path}_R_T1map_blur_NONgrad.func.gii"
-                    ),
-                )
-                os.rename(
-                    outputfile[1],
-                    os.path.join(
-                        workingdir, patient, f"{path}_R_T1map_blur_intensities.csv"
-                    ),
-                )
-                os.rename(
-                    outputfile[2],
-                    os.path.join(
-                        workingdir, patient, f"{path}_R_T1map_blur_distances.csv"
-                    ),
-                )
-            except Exception as e:
-                print(e)
-                print(f"Error with {path}")
-            # compute_blurring(
-            #     input_dir=os.path.join(datadir, micapipe, path.split("_")[0], path.split("_")[1]),
-            #     surf_dir=os.path.join(datadir, freesurfer, path),
-            #     bids_id=path,
-            #     hemi="L",
-            #     feat="T1map",
-            #     workbench_path=wb_path,
-            #     resol=1,
-            #     fwhm=5,
-            #     tmp_dir=os.path.join(tmpdir),
-            #     fs_path=fs_path
-            # )
-            # compute_blurring(
-            #     input_dir=os.path.join(datadir, micapipe, path),
-            #     surf_dir=os.path.join(datadir, micapipe, path, "freesurfer"),
-            #     bids_id=path,
-            #     hemi="R",
-            #     feat="T1map",
-            #     workbench_path=wb_path,
-            #     resol=1,
-            #     fwhm=5,
-            #     tmp_dir=os.path.join(tmpdir),
-            #     fs_path=fs_path
-            # )
-print("e")
+
+with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
+    Parallel(n_jobs=16)(
+        delayed(process_path)(
+            patient,
+            path,
+            workingdir,
+            datadir,
+            micapipe,
+            freesurfer,
+            wb_path,
+            fs_path,
+            tmpdir,
+        )
+        for patient in controls
+        for path in controls[patient]
+    )
