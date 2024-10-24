@@ -53,12 +53,10 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3]):
     print("loaded data and parameters")
 
     # Get image resolution
-    xres = laplace.affine[0, 0]
-    yres = laplace.affine[1, 1]
-    zres = laplace.affine[2, 2]
+    xres, yres, zres = laplace.affine[0, 0], laplace.affine[1, 1], laplace.affine[2, 2]
 
     # Convert depths from mm to voxels
-    depth_vox = [(depth / xres) for depth in depth_mm]
+    depth_vox = np.array(depth_mm) / xres
 
     # Convert depth values to strings with a specific format
     depth_str = [f"{d:.1f}" for d in depth_mm]  # Use one decimal place
@@ -71,42 +69,37 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3]):
     dx, dy, dz = np.gradient(lp)
 
     # Scale the gradients by the image resolutions to handle anisotropy
-    dx = dx / xres
-    dy = dy / yres
-    dz = dz / zres
+    dx /= xres
+    dy /= yres
+    dz /= zres
 
-    distance_travelled = np.zeros((len(V)))
+    distance_travelled = np.zeros(len(V))
     for d, d_str in zip(depth_vox, depth_str):
         # apply inverse affine to surface to get to matrix space
-        V[:, :] = V - laplace.affine[:3, 3].T
-        for xyz in range(3):
-            V[:, xyz] = V[:, xyz] * (1 / laplace.affine[xyz, xyz])
+        V = (V - laplace.affine[:3, 3].T) / laplace.affine[:3, :3].diagonal()
+
         for i in range(max_iters):
-            Vnew = copy.deepcopy(V)
             pts = distance_travelled < d
-            V_tmp = Vnew[pts, :].astype(int)
+            V_tmp = V[pts].astype(int)
             stepx = dx[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
             stepy = dy[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
             stepz = dz[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
             magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
-            for m in range(len(magnitude)):
-                if magnitude[m] > 0:
-                    stepx[m] = stepx[m] * (step_size / magnitude[m])
-                    stepy[m] = stepy[m] * (step_size / magnitude[m])
-                    stepz[m] = stepz[m] * (step_size / magnitude[m])
-            Vnew[pts, 0] += stepx
-            Vnew[pts, 1] += stepy
-            Vnew[pts, 2] += stepz
+            nonzero_magnitude = magnitude > 0
+            stepx[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
+            stepy[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
+            stepz[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
+            V[pts, 0] += stepx
+            V[pts, 1] += stepy
+            V[pts, 2] += stepz
             distance_travelled[pts] += step_size
-            ssd = np.sum((V - Vnew) ** 2, axis=None)
+            ssd = np.sum((V[pts] - V[pts]) ** 2)
             print(f"iteration {i}, convergence: {ssd}, still moving: {np.sum(pts)}")
             if ssd < convergence_threshold:
                 break
-            V[:, :] = Vnew[:, :]
+
         # return to world coords
-        for xyz in range(3):
-            V[:, xyz] = V[:, xyz] * (laplace.affine[xyz, xyz])
-        V[:, :] = V + laplace.affine[:3, 3].T
+        V = V * laplace.affine[:3, :3].diagonal() + laplace.affine[:3, 3].T
 
         nib.save(surf, out_surf_prefix + d_str + "mm.surf.gii")
         print(f"saved {out_surf_prefix}{d_str}mm.surf.gii")
