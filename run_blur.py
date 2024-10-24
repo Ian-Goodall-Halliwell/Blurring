@@ -88,6 +88,12 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
                     workingdir, patient, f"{path}_L_T1map_blur_NONgrad.func.gii"
                 ),
             )
+            os.rename(
+                outputfile[2],
+                os.path.join(
+                    workingdir, patient, f"{path}_L_T1map_blur_intensities.csv"
+                ),
+            )
             outputfile = compute_blurring(
                 input_dir=os.path.join(
                     datadir, micapipe, path.split("_")[0], path.split("_")[1]
@@ -110,6 +116,12 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
                 outputfile[1],
                 os.path.join(
                     workingdir, patient, f"{path}_R_T1map_blur_NONgrad.func.gii"
+                ),
+            )
+            os.rename(
+                outputfile[2],
+                os.path.join(
+                    workingdir, patient, f"{path}_R_T1map_blur_intensities.csv"
                 ),
             )
             # compute_blurring(

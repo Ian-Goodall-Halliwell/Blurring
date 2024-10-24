@@ -7,6 +7,7 @@ from sWM import laplace_solver, surface_generator
 import ants
 from ants.ops import resample_image_to_target
 import scipy
+import pandas as pd
 
 
 def fixmatrix(path, inputmap, outputmap, basemap, BIDS_ID, temppath, wb_path, mat_path):
@@ -276,6 +277,14 @@ def compute_blurring(
             "CORTEX_LEFT" if hemi == "L" else "CORTEX_RIGHT",
         ]
     )
+    df = pd.DataFrame(dataArr_nonmode)
+    df.to_csv(
+        os.path.join(
+            tmp_dir,
+            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-intensities.csv",
+        ),
+        index=False,
+    )
 
     data_non_grad = nib.gifti.gifti.GiftiDataArray(
         data=dataArr_nonmode,
@@ -346,6 +355,10 @@ def compute_blurring(
         os.path.join(
             tmp_dir,
             f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad-output.func.gii",
+        ),
+        os.path.join(
+            tmp_dir,
+            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-intensities.csv",
         ),
     ]
 
