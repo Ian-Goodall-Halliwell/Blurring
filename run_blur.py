@@ -26,7 +26,8 @@ patients = {
     "PX069": [],  #
     # "PX076": [],
 }
-workingdir = "/host/verges/tank/data/ian/blur"
+# workingdir = "/host/verges/tank/data/ian/blur"
+workingdir = "/data/mica3/BIDS_MICs/derivatives/zbrains_blur"
 datadir = "/data/mica3/BIDS_MICs/derivatives"
 micapipe = "micapipe_v0.2.0"
 freesurfer = "freesurfer"
