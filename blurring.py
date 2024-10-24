@@ -231,28 +231,28 @@ def compute_blurring(
         ),
     )
 
-    all_blurred = []
-    # for i in ["midthickness-0mm", "0mm-1mm", "1mm-2mm", "2mm-3mm"]:
-    subprocess.run(
-        [
-            os.path.join(workbench_path, "wb_command"),
-            "-set-structure",
-            os.path.join(
-                tmp_dir,
-                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_grad.func.gii",
-            ),
-            "CORTEX_LEFT" if hemi == "L" else "CORTEX_RIGHT",
-        ]
+    data_non_grad = nib.gifti.gifti.GiftiDataArray(
+        data=dataArr_nonmode,
+        intent="NIFTI_INTENT_NORMAL",
     )
+
+    gii_non_grad = nib.gifti.GiftiImage(darrays=[data_non_grad])
+    nib.save(
+        gii_non_grad,
+        os.path.join(
+            tmp_dir,
+            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad.func.gii",
+        ),
+    )
+
     subprocess.run(
         [
             os.path.join(workbench_path, "wb_command"),
             "-metric-resample",
             os.path.join(
                 tmp_dir,
-                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_grad.func.gii",
+                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad.func.gii",
             ),
-            # "E:\data\derivatives\micapipe\sub-PX103\ses-01\surf\sub-PX103_ses-01_Normal.func.gii",
             os.path.join(
                 input_dir,
                 "surf",
@@ -262,21 +262,53 @@ def compute_blurring(
             "BARYCENTRIC",
             os.path.join(
                 tmp_dir,
-                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_grad-output.func.gii",
+                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad-output.func.gii",
             ),
         ]
     )
+
+    data_dist = nib.gifti.gifti.GiftiDataArray(
+        data=distances,
+        intent="NIFTI_INTENT_NORMAL",
+    )
+    gii_dist = nib.gifti.GiftiImage(darrays=[data_dist])
+    nib.save(
+        gii_dist,
+        os.path.join(
+            tmp_dir,
+            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_dist.func.gii",
+        ),
+    )
+
     subprocess.run(
         [
             os.path.join(workbench_path, "wb_command"),
-            "-set-structure",
+            "-metric-resample",
             os.path.join(
                 tmp_dir,
-                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_grad-output.func.gii",
+                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_dist.func.gii",
             ),
-            "CORTEX_LEFT" if hemi == "L" else "CORTEX_RIGHT",
+            os.path.join(
+                input_dir,
+                "surf",
+                f"{bids_id}_hemi-{hemi}_surf-fsnative_label-sphere.surf.gii",
+            ),
+            f"src/data/fsLR-{resol}.{hemi}.sphere.reg.surf.gii",
+            "BARYCENTRIC",
+            os.path.join(
+                tmp_dir,
+                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_dist-output.func.gii",
+            ),
         ]
     )
+
+    data_fslr = nib.load(
+        os.path.join(
+            tmp_dir,
+            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_dist-output.func.gii",
+        )
+    ).darrays
+    print(data_fslr)
     df = pd.DataFrame(dataArr_nonmode)
     df.to_csv(
         os.path.join(
@@ -292,67 +324,6 @@ def compute_blurring(
             f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-distances.csv",
         ),
         index=False,
-    )
-
-    data_non_grad = nib.gifti.gifti.GiftiDataArray(
-        data=dataArr_nonmode,
-        intent="NIFTI_INTENT_NORMAL",
-    )
-
-    gii_non_grad = nib.gifti.GiftiImage(darrays=[data_non_grad])
-    nib.save(
-        gii_non_grad,
-        os.path.join(
-            tmp_dir,
-            f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad.func.gii",
-        ),
-    )
-
-    all_blurred = []
-    # for i in ["midthickness-0mm", "0mm-1mm", "1mm-2mm", "2mm-3mm"]:
-    subprocess.run(
-        [
-            os.path.join(workbench_path, "wb_command"),
-            "-set-structure",
-            os.path.join(
-                tmp_dir,
-                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad.func.gii",
-            ),
-            "CORTEX_LEFT" if hemi == "L" else "CORTEX_RIGHT",
-        ]
-    )
-    subprocess.run(
-        [
-            os.path.join(workbench_path, "wb_command"),
-            "-metric-resample",
-            os.path.join(
-                tmp_dir,
-                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad.func.gii",
-            ),
-            # "E:\data\derivatives\micapipe\sub-PX103\ses-01\surf\sub-PX103_ses-01_Normal.func.gii",
-            os.path.join(
-                input_dir,
-                "surf",
-                f"{bids_id}_hemi-{hemi}_surf-fsnative_label-sphere.surf.gii",
-            ),
-            f"src/data/fsLR-{resol}.{hemi}.sphere.reg.surf.gii",
-            "BARYCENTRIC",
-            os.path.join(
-                tmp_dir,
-                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad-output.func.gii",
-            ),
-        ]
-    )
-    subprocess.run(
-        [
-            os.path.join(workbench_path, "wb_command"),
-            "-set-structure",
-            os.path.join(
-                tmp_dir,
-                f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad-output.func.gii",
-            ),
-            "CORTEX_LEFT" if hemi == "L" else "CORTEX_RIGHT",
-        ]
     )
 
     return [
