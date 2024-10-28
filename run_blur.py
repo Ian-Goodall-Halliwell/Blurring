@@ -74,7 +74,8 @@ def process_path(
     current_file_directory,
 ):
     try:
-        os.mkdir(os.path.join(workingdir, patient))
+        if not os.path.exists(os.path.join(workingdir, patient)):
+            os.mkdir(os.path.join(workingdir, patient))
         outputfile = compute_blurring(
             input_dir=os.path.join(
                 datadir, micapipe, path.split("_")[0], path.split("_")[1]
