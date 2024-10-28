@@ -118,11 +118,13 @@ def compute_blurring(
                     micapipe_path,
                     f"{surf_dir}/mri/aparc+aseg.mgz",
                 ),
-                os.path.join(tmp_dir, f"{hemi}_surf-fsnative_label-temp-fixed.nii.gz"),
+                os.path.join(
+                    tmp_dir, f"{bids_id}_{hemi}_surf-fsnative_label-temp-fixed.nii.gz"
+                ),
             ]
         )
         freesurfer_path = os.path.join(
-            tmp_dir, f"{hemi}_surf-fsnative_label-temp-fixed.nii.gz"
+            tmp_dir, f"{bids_id}_{hemi}_surf-fsnative_label-temp-fixed.nii.gz"
         )
     if not os.path.exists(temp_parc_path):
         fixmatrix(
@@ -142,7 +144,7 @@ def compute_blurring(
         surface_generator.shift_surface(
             f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.surf.gii",
             output_path,
-            f"{tmp_dir}//swm//{hemi}_sfwm-",
+            f"{tmp_dir}//swm//{bids_id}_{hemi}_sfwm-",
             [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
         )
 
@@ -176,17 +178,19 @@ def compute_blurring(
                 os.path.join(workbench_path, "wb_command"),
                 "-volume-to-surface-mapping",
                 volumemap,
-                f"{tmp_dir}//swm//{hemi}_sfwm-{surf}mm.surf.gii",
-                f"{tmp_dir}//swm//{hemi}_{feat}_{resol}_{fwhm}sfwm-{surf}mm-metric.func.gii",
+                f"{tmp_dir}//swm//{bids_id}_{hemi}_sfwm-{surf}mm.surf.gii",
+                f"{tmp_dir}//swm//{bids_id}_{hemi}_{feat}_{resol}_{fwhm}sfwm-{surf}mm-metric.func.gii",
                 "-trilinear",
             ]
         )
         surfarr.append(
             [
                 load_gifti_data(
-                    f"{tmp_dir}//swm//{hemi}_{feat}_{resol}_{fwhm}sfwm-{surf}mm-metric.func.gii"
+                    f"{tmp_dir}//swm//{bids_id}_{hemi}_{feat}_{resol}_{fwhm}sfwm-{surf}mm-metric.func.gii"
                 ),
-                load_gifti_data(f"{tmp_dir}//swm//{hemi}_sfwm-{surf}mm.surf.gii"),
+                load_gifti_data(
+                    f"{tmp_dir}//swm//{bids_id}_{hemi}_sfwm-{surf}mm.surf.gii"
+                ),
             ]
         )
 
