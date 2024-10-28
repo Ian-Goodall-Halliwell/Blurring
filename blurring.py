@@ -89,6 +89,7 @@ def compute_blurring(
     fwhm,
     tmp_dir,
     fs_path,
+    current_file_directory,
 ):
 
     base_path = input_dir
@@ -258,7 +259,10 @@ def compute_blurring(
                 "surf",
                 f"{bids_id}_hemi-{hemi}_surf-fsnative_label-sphere.surf.gii",
             ),
-            f"src/data/fsLR-{resol}.{hemi}.sphere.reg.surf.gii",
+            os.path.join(
+                current_file_directory,
+                f"src/data/fsLR-{resol}.{hemi}.sphere.reg.surf.gii",
+            ),
             "BARYCENTRIC",
             os.path.join(
                 tmp_dir,
@@ -293,7 +297,10 @@ def compute_blurring(
                 "surf",
                 f"{bids_id}_hemi-{hemi}_surf-fsnative_label-sphere.surf.gii",
             ),
-            f"src/data/fsLR-{resol}.{hemi}.sphere.reg.surf.gii",
+            os.path.join(
+                current_file_directory,
+                f"src/data/fsLR-{resol}.{hemi}.sphere.reg.surf.gii",
+            ),
             "BARYCENTRIC",
             os.path.join(
                 tmp_dir,

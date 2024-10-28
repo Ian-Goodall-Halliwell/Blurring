@@ -37,6 +37,8 @@ fs_path = "/data/mica1/01_programs/freesurfer-7.4.1/bin"
 zbrainsname = "zbrains"
 os.environ["FREESURFER_HOME"] = fs_path
 os.environ["FS_LICENSE"] = "/home/bic/igoodall/Downloads/license.txt"
+current_file_directory = os.path.dirname(os.path.abspath(__file__))
+
 # Sort out and loop through paths
 
 import os
@@ -60,7 +62,16 @@ controls = {control: sorted(controls[control]) for control in controls}
 
 
 def process_path(
-    patient, path, workingdir, datadir, micapipe, freesurfer, wb_path, fs_path, tmpdir
+    patient,
+    path,
+    workingdir,
+    datadir,
+    micapipe,
+    freesurfer,
+    wb_path,
+    fs_path,
+    tmpdir,
+    current_file_directory,
 ):
     try:
         outputfile = compute_blurring(
@@ -76,6 +87,7 @@ def process_path(
             fwhm=5,
             tmp_dir=tmpdir,
             fs_path=fs_path,
+            current_file_directory=current_file_directory,
         )
         os.rename(
             outputfile[0],
@@ -102,6 +114,7 @@ def process_path(
             fwhm=5,
             tmp_dir=tmpdir,
             fs_path=fs_path,
+            current_file_directory=current_file_directory,
         )
         os.rename(
             outputfile[0],
@@ -132,6 +145,7 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
             wb_path,
             fs_path,
             tmpdir,
+            current_file_directory,
         )
         for patient in controls
         for path in controls[patient]
