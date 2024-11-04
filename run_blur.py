@@ -149,6 +149,6 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
             tmpdir,
             current_file_directory,
         )
-        for patient in controls
-        for path in controls[patient]
+        for patient in patients
+        for path in patients[patient]
     )
