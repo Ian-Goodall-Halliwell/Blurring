@@ -39,11 +39,23 @@ def fixmatrix(path, inputmap, outputmap, basemap, BIDS_ID, temppath, wb_path, ma
 
     print(m_matrix)
     with open(
-        os.path.join(temppath, "real_world_affine.txt"),
+        os.path.join(temppath, f"{BIDS_ID}_real_world_affine.txt"),
         "w",
     ) as f:
         for row in m_matrix:
             f.write(" ".join(map(str, row)) + "\n")
+
+    command4 = [
+        os.path.join(wb_path, "wb_command"),
+        "-convert-affine",
+        "-from-world",
+        os.path.join(temppath, f"{BIDS_ID}_real_world_affine.txt"),
+        "-to-world",
+        "-inverse",
+        os.path.join(temppath, f"{BIDS_ID}_real_world_affine.txt"),
+    ]
+
+    subprocess.run(command4)
 
     command3 = [
         os.path.join(wb_path, "wb_command"),
@@ -53,10 +65,11 @@ def fixmatrix(path, inputmap, outputmap, basemap, BIDS_ID, temppath, wb_path, ma
         "ENCLOSING_VOXEL",
         outputmap,
         "-affine",
-        os.path.join(temppath, "real_world_affine.txt"),
+        os.path.join(temppath, f"{BIDS_ID}_real_world_affine.txt"),
     ]
 
     subprocess.run(command3)
+
 
 
 def load_gifti_data(filepath):
@@ -106,7 +119,7 @@ def compute_blurring(
         tmp_dir, f"{bids_id}_{hemi}_surf-fsnative_label-temp.nii.gz"
     )
     print(temp_parc_path)
-    output_path = os.path.join(tmp_dir, f"laplace{hemi}.nii.gz")
+    output_path = os.path.join(tmp_dir, f"{bids_id}-laplace.nii.gz")
     # img = ants.image_read(freesurfer_path)
     # imgfixed = ants.image_read(f"{input_dir}/{bids_id}_space-nativepro_map-T1map.nii.gz")
     # resample_image_to_target(imgfixed, img, interp_type='multiLabel', verbose=True).to_filename(temp_parc_path)
@@ -145,7 +158,7 @@ def compute_blurring(
             f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.surf.gii",
             output_path,
             f"{tmp_dir}//swm//{bids_id}_{hemi}_sfwm-",
-            [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
+            [0.0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
         )
 
     wmBoundaryDataArr = load_gifti_data(
@@ -172,7 +185,7 @@ def compute_blurring(
         volumemap = f"{input_dir}/maps/{bids_id}_space-nativepro_map-{feat}.nii.gz"
     else:
         volumemap = f"{input_dir}/maps/{bids_id}_space-nativepro_model-DTI_map-{feat.upper()}.nii.gz"
-    for surf in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]:
+    for surf in [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]:
         subprocess.run(
             [
                 os.path.join(workbench_path, "wb_command"),

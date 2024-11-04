@@ -41,6 +41,59 @@ def arg2float_list(arg):
     return list(map(float, arg.split(",")))
 
 
+
+def avg_neighbours(F, cdat, n):
+    """
+    Averages vertex-wise data at vertex n with its neighboring vertices.
+
+    Parameters
+    ----------
+    F: Faces, numpy.ndarray
+    cdat: vertex data, numpy.ndarray
+    n: Vertex index for which the data will be averaged with its neighboring vertices, int
+    Returns
+    -------
+    float
+        The average value of the vertex-wise data at vertex n and its neighboring vertices.
+    """
+    frows = np.where(F == n)[0]
+    v = np.unique(F[frows, :])
+    cdat = np.reshape(cdat, (len(cdat), -1))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        out = np.nanmean(cdat[v,:], 0)
+    return out
+
+def surfdat_smooth(F, cdata, iters=1, cores=1):
+    """
+       Smooths surface data across neighboring vertices.
+       TODO: convert to mm vis calibration curves in https://github.com/MELDProject/meld_classifier/blob/9d3d364de86dc207d3a1e5ec11dcab3ef012ebcb/meld_classifier/mesh_tools.py#L17'''
+       This function assumes that vertices are evenly spaced and evenly connected.
+
+       Parameters
+       ----------
+       F : numpy.ndarray
+       cdata : numpy.ndarray
+       iters : int, optional
+       cores : int, optional
+       Returns
+       -------
+       numpy.ndarray
+           Smoothed surface data across neighboring vertices.
+       """
+    sz = cdata.shape
+    cdata = cdata.reshape(cdata.shape[0], -1)
+    cdata_smooth = copy.deepcopy(cdata)
+    for i in range(iters):
+        if cores>1:
+            c = Parallel(n_jobs=cores, backend='multiprocessing')(delayed(avg_neighbours)(F, cdata, n) for n in range(len(cdata)))
+            cdata_smooth = np.array(c)
+        else:
+            for n in range(len(cdata)):
+                cdata_smooth[n,:] = avg_neighbours(F, cdata, n)
+        cdata = copy.deepcopy(cdata_smooth)
+    return cdata_smooth.reshape(sz)
+
 def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3]):
     print("starting surface shift")
 
@@ -88,6 +141,13 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3]):
             stepx = dx[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
             stepy = dy[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
             stepz = dz[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
+            # apply gradient surface smoothing
+            for i in range(3):
+                stepx[i,:] = surfdat_smooth(F, stepx[i,:])
+                stepy[i,:] = surfdat_smooth(F, stepy[i,:])
+                stepz[i,:] = surfdat_smooth(F, stepz[i,:])
+
+            # scale magnitude to step size
             magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
             for m in range(len(magnitude)):
                 if magnitude[m] > 0:
