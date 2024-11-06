@@ -136,7 +136,7 @@ def process_path(
 
 
 with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
-    Parallel(n_jobs=16)(
+    Parallel(n_jobs=4)(
         delayed(process_path)(
             patient,
             path,
