@@ -136,19 +136,35 @@ def process_path(
 
 
 with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
-    Parallel(n_jobs=4)(
-        delayed(process_path)(
-            patient,
-            path,
-            workingdir,
-            datadir,
-            micapipe,
-            freesurfer,
-            wb_path,
-            fs_path,
-            tmpdir,
-            current_file_directory,
-        )
-        for patient in controls
-        for path in controls[patient]
-    )
+    for patient in controls:
+        for path in controls[patient]:
+            process_path(
+                patient,
+                path,
+                workingdir,
+                datadir,
+                micapipe,
+                freesurfer,
+                wb_path,
+                fs_path,
+                tmpdir,
+                current_file_directory,
+            )
+
+# with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
+#     Parallel(n_jobs=4)(
+#         delayed(process_path)(
+#             patient,
+#             path,
+#             workingdir,
+#             datadir,
+#             micapipe,
+#             freesurfer,
+#             wb_path,
+#             fs_path,
+#             tmpdir,
+#             current_file_directory,
+#         )
+#         for patient in controls
+#         for path in controls[patient]
+#     )
