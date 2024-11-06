@@ -18,13 +18,13 @@ patients = {
     # # "PX023": [],
     # # "PX026": [],  #
     # # "PX028": [],  #
-    # "PX029": [],  #
+    "PX029": [],  #
     # # "PX044": [],
     # # "PX047": [],
     # "PX049": [],  #
     # "PX051": [],  #
     # # "PX060": [],  #
-    # "PX069": [],  #
+    "PX069": [],  #
     # # "PX076": [],
 }
 # workingdir = "/host/verges/tank/data/ian/blur"
@@ -149,6 +149,6 @@ with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
             tmpdir,
             current_file_directory,
         )
-        for patient in patients
-        for path in patients[patient]
+        for patient in controls
+        for path in controls[patient]
     )
