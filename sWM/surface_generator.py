@@ -49,8 +49,11 @@ def avg_neighbours(F, cdat, n):
     float
         The average value of the vertex-wise data at vertex n and its neighboring vertices.
     """
+    # Cache the results of np.where and np.unique
     frows = np.where(F == n)[0]
     v = np.unique(F[frows, :])
+    
+    # Use np.nanmean to compute the mean of the vertex-wise data
     out = np.nanmean(cdat[v])
     return out
 
@@ -68,9 +71,9 @@ def process_depth(V, F, dx, dy, dz, laplace_affine, step_size, nsteps, d_str, ou
         # if step==0, get it from neighbour vertices
         zerostep = np.where((stepx == 0) & (stepy == 0) & (stepz == 0))[0]
         if zerostep.size > 0:
-            stepx[zerostep] = Parallel(n_jobs=n_jobs//3)(delayed(avg_neighbours)(F, stepx, v) for v in zerostep)
-            stepy[zerostep] = Parallel(n_jobs=n_jobs//3)(delayed(avg_neighbours)(F, stepy, v) for v in zerostep)
-            stepz[zerostep] = Parallel(n_jobs=n_jobs//3)(delayed(avg_neighbours)(F, stepz, v) for v in zerostep)
+            stepx[zerostep] = Parallel(n_jobs=n_jobs)(delayed(avg_neighbours)(F, stepx, v) for v in zerostep)
+            stepy[zerostep] = Parallel(n_jobs=n_jobs)(delayed(avg_neighbours)(F, stepy, v) for v in zerostep)
+            stepz[zerostep] = Parallel(n_jobs=n_jobs)(delayed(avg_neighbours)(F, stepz, v) for v in zerostep)
         # rescale magnitude to a fixed step size
         magnitude = np.sqrt(stepx ** 2 + stepy ** 2 + stepz ** 2)
         nonzero_magnitude = magnitude > 0
