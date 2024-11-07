@@ -105,42 +105,43 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3]):
     dy = dy / yres
     dz = dz / zres
 
+    # Precompute inverse affine transformation
+    inv_affine = np.linalg.inv(laplace.affine)
+
     for nsteps, d_str in zip(np.diff([0] + depth_mm) / step_size, depth_str):
         # apply inverse affine to surface to get to matrix space
-        V[:, :] = V - laplace.affine[:3, 3].T
-        for xyz in range(3):
-            V[:, xyz] = V[:, xyz] * (1 / laplace.affine[xyz, xyz])
+        V_transformed = (V - laplace.affine[:3, 3].T) @ np.diag(1 / np.diag(laplace.affine[:3, :3]))
+
         for i in range(int(nsteps)):
-            Vnew = copy.deepcopy(V)
             # get laplace gradient at each vertex
-            V_tmp = Vnew.astype(int)
+            V_tmp = V_transformed.astype(int)
             stepx = dx[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
             stepy = dy[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
             stepz = dz[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
+
             # if step==0, get it from neighbour vertices
-            zerostep = np.array(np.where(np.logical_and.reduce((stepx == 0, stepy == 0, stepz == 0)))[0])
-            for v in zerostep:
-                print(v)
-                stepx[v] = avg_neighbours(F, stepx, v)
-                stepy[v] = avg_neighbours(F, stepy, v)
-                stepz[v] = avg_neighbours(F, stepz, v)
+            zerostep = np.where((stepx == 0) & (stepy == 0) & (stepz == 0))[0]
+            if zerostep.size > 0:
+                stepx[zerostep] = [avg_neighbours(F, stepx, v) for v in zerostep]
+                stepy[zerostep] = [avg_neighbours(F, stepy, v) for v in zerostep]
+                stepz[zerostep] = [avg_neighbours(F, stepz, v) for v in zerostep]
+
             # rescale magnitude to a fixed step size
             magnitude = np.sqrt(stepx ** 2 + stepy ** 2 + stepz ** 2)
-            for m in range(len(magnitude)):
-                if magnitude[m] > 0:
-                    stepx[m] = stepx[m] * (step_size / magnitude[m])
-                    stepy[m] = stepy[m] * (step_size / magnitude[m])
-                    stepz[m] = stepz[m] * (step_size / magnitude[m])
+            nonzero_magnitude = magnitude > 0
+            stepx[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
+            stepy[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
+            stepz[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
+
             # now march
-            Vnew[:, 0] += stepx
-            Vnew[:, 1] += stepy
-            Vnew[:, 2] += stepz
-            # apply update
-            V[:, :] = Vnew[:, :]
+            V_transformed[:, 0] += stepx
+            V_transformed[:, 1] += stepy
+            V_transformed[:, 2] += stepz
+
         # return to world coords
-        for xyz in range(3):
-            V[:, xyz] = V[:, xyz] * (laplace.affine[xyz, xyz])
-        V[:, :] = V + laplace.affine[:3, 3].T
+        V_world = V_transformed @ np.diag(np.diag(laplace.affine[:3, :3])) + laplace.affine[:3, 3].T
+        V[:, :] = V_world
+
         nib.save(surf, out_surf_prefix + d_str + 'mm.surf.gii')
         print(f'generated surface at depth {d_str}mm')
 
