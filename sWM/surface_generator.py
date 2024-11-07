@@ -149,6 +149,7 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jo
     dy = dy / yres
     dz = dz / zres
     for nsteps, d_str in zip(np.diff([0] + depth_mm) / step_size, depth_str):
+        print('processing depth: ', d_str)
         process_depth(V, F, dx, dy, dz, laplace.affine, step_size, nsteps, d_str, out_surf_prefix, surf, n_jobs)
 
 
