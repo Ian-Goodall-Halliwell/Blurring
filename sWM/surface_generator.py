@@ -34,6 +34,7 @@ import nibabel as nib
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from joblib import Parallel, delayed
+from tqdm import tqdm
 
 def avg_neighbours(F, cdat, n):
     """
@@ -71,9 +72,15 @@ def process_depth(V, F, dx, dy, dz, laplace_affine, step_size, nsteps, d_str, ou
         # if step==0, get it from neighbour vertices
         zerostep = np.where((stepx == 0) & (stepy == 0) & (stepz == 0))[0]
         if zerostep.size > 0:
-            stepx[zerostep] = Parallel(n_jobs=n_jobs)(delayed(avg_neighbours)(F, stepx, v) for v in zerostep)
-            stepy[zerostep] = Parallel(n_jobs=n_jobs)(delayed(avg_neighbours)(F, stepy, v) for v in zerostep)
-            stepz[zerostep] = Parallel(n_jobs=n_jobs)(delayed(avg_neighbours)(F, stepz, v) for v in zerostep)
+            stepx[zerostep] = Parallel(n_jobs=n_jobs)(
+                delayed(avg_neighbours)(F, stepx, v) for v in tqdm(zerostep, desc="Processing stepx")
+            )
+            stepy[zerostep] = Parallel(n_jobs=n_jobs)(
+                delayed(avg_neighbours)(F, stepy, v) for v in tqdm(zerostep, desc="Processing stepy")
+            )
+            stepz[zerostep] = Parallel(n_jobs=n_jobs)(
+                delayed(avg_neighbours)(F, stepz, v) for v in tqdm(zerostep, desc="Processing stepz")
+            )
         # rescale magnitude to a fixed step size
         magnitude = np.sqrt(stepx ** 2 + stepy ** 2 + stepz ** 2)
         nonzero_magnitude = magnitude > 0
