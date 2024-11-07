@@ -33,7 +33,7 @@ import copy
 import nibabel as nib
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
-import sys
+from joblib import Parallel, delayed
 
 def avg_neighbours(F, cdat, n):
     """
@@ -54,7 +54,41 @@ def avg_neighbours(F, cdat, n):
     out = np.nanmean(cdat[v])
     return out
 
-def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3]):
+def process_depth(V, F, dx, dy, dz, laplace_affine, step_size, nsteps, d_str, out_surf_prefix, surf, n_jobs):
+    V = copy.deepcopy(V)
+    # apply inverse affine to surface to get to matrix space
+    V[:, :] = V - laplace_affine[:3, 3].T
+    for xyz in range(3):
+        V[:, xyz] = V[:, xyz] * (1 / laplace_affine[xyz, xyz])
+    for i in range(int(nsteps)):
+        V_tmp = V.astype(int)
+        stepx = dx[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
+        stepy = dy[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
+        stepz = dz[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
+        # if step==0, get it from neighbour vertices
+        zerostep = np.where((stepx == 0) & (stepy == 0) & (stepz == 0))[0]
+        if zerostep.size > 0:
+            stepx[zerostep] = Parallel(n_jobs=n_jobs//3)(delayed(avg_neighbours)(F, stepx, v) for v in zerostep)
+            stepy[zerostep] = Parallel(n_jobs=n_jobs//3)(delayed(avg_neighbours)(F, stepy, v) for v in zerostep)
+            stepz[zerostep] = Parallel(n_jobs=n_jobs//3)(delayed(avg_neighbours)(F, stepz, v) for v in zerostep)
+        # rescale magnitude to a fixed step size
+        magnitude = np.sqrt(stepx ** 2 + stepy ** 2 + stepz ** 2)
+        nonzero_magnitude = magnitude > 0
+        stepx[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
+        stepy[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
+        stepz[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
+        # now march
+        V[:, 0] += stepx
+        V[:, 1] += stepy
+        V[:, 2] += stepz
+    # return to world coords
+    for xyz in range(3):
+        V[:, xyz] = V[:, xyz] * (laplace_affine[xyz, xyz])
+    V[:, :] = V + laplace_affine[:3, 3].T
+    nib.save(surf, out_surf_prefix + d_str + 'mm.surf.gii')
+    print(f'generated surface at depth {d_str}mm')
+
+def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=32):
     """
     Shifts a white matter surface inward along a Laplace field.
 
@@ -104,46 +138,9 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3]):
     dx = dx / xres
     dy = dy / yres
     dz = dz / zres
-
-    # Precompute inverse affine transformation
-    inv_affine = np.linalg.inv(laplace.affine)
-
     for nsteps, d_str in zip(np.diff([0] + depth_mm) / step_size, depth_str):
-        # apply inverse affine to surface to get to matrix space
-        V_transformed = (V - laplace.affine[:3, 3].T) @ np.diag(1 / np.diag(laplace.affine[:3, :3]))
+        process_depth(V, F, dx, dy, dz, laplace.affine, step_size, nsteps, d_str, out_surf_prefix, surf, n_jobs)
 
-        for i in range(int(nsteps)):
-            # get laplace gradient at each vertex
-            V_tmp = V_transformed.astype(int)
-            stepx = dx[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
-            stepy = dy[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
-            stepz = dz[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
-
-            # if step==0, get it from neighbour vertices
-            zerostep = np.where((stepx == 0) & (stepy == 0) & (stepz == 0))[0]
-            if zerostep.size > 0:
-                stepx[zerostep] = [avg_neighbours(F, stepx, v) for v in zerostep]
-                stepy[zerostep] = [avg_neighbours(F, stepy, v) for v in zerostep]
-                stepz[zerostep] = [avg_neighbours(F, stepz, v) for v in zerostep]
-
-            # rescale magnitude to a fixed step size
-            magnitude = np.sqrt(stepx ** 2 + stepy ** 2 + stepz ** 2)
-            nonzero_magnitude = magnitude > 0
-            stepx[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
-            stepy[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
-            stepz[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
-
-            # now march
-            V_transformed[:, 0] += stepx
-            V_transformed[:, 1] += stepy
-            V_transformed[:, 2] += stepz
-
-        # return to world coords
-        V_world = V_transformed @ np.diag(np.diag(laplace.affine[:3, :3])) + laplace.affine[:3, 3].T
-        V[:, :] = V_world
-
-        nib.save(surf, out_surf_prefix + d_str + 'mm.surf.gii')
-        print(f'generated surface at depth {d_str}mm')
 
 # Example usage:
 # shift_surface('hemi-L_label-white.surf.gii', 'laplace-wm.nii.gz', 'hemi-L_label-sWF_depth-')
