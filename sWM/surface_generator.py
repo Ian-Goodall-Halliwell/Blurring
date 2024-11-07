@@ -64,7 +64,7 @@ def process_depth(V, F, dx, dy, dz, laplace_affine, step_size, nsteps, d_str, ou
     V[:, :] = V - laplace_affine[:3, 3].T
     for xyz in range(3):
         V[:, xyz] = V[:, xyz] * (1 / laplace_affine[xyz, xyz])
-    for i in range(int(nsteps)):
+    for i in tqdm(range(int(nsteps)), desc="Processing steps"):
         V_tmp = V.astype(int)
         stepx = dx[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
         stepy = dy[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
@@ -73,13 +73,13 @@ def process_depth(V, F, dx, dy, dz, laplace_affine, step_size, nsteps, d_str, ou
         zerostep = np.where((stepx == 0) & (stepy == 0) & (stepz == 0))[0]
         if zerostep.size > 0:
             stepx[zerostep] = Parallel(n_jobs=n_jobs)(
-                delayed(avg_neighbours)(F, stepx, v) for v in tqdm(zerostep, desc="Processing stepx")
+                delayed(avg_neighbours)(F, stepx, v) for v in zerostep
             )
             stepy[zerostep] = Parallel(n_jobs=n_jobs)(
-                delayed(avg_neighbours)(F, stepy, v) for v in tqdm(zerostep, desc="Processing stepy")
+                delayed(avg_neighbours)(F, stepy, v) for v in zerostep
             )
             stepz[zerostep] = Parallel(n_jobs=n_jobs)(
-                delayed(avg_neighbours)(F, stepz, v) for v in tqdm(zerostep, desc="Processing stepz")
+                delayed(avg_neighbours)(F, stepz, v) for v in zerostep
             )
         # rescale magnitude to a fixed step size
         magnitude = np.sqrt(stepx ** 2 + stepy ** 2 + stepz ** 2)
@@ -98,7 +98,7 @@ def process_depth(V, F, dx, dy, dz, laplace_affine, step_size, nsteps, d_str, ou
     nib.save(surf, out_surf_prefix + d_str + 'mm.surf.gii')
     print(f'generated surface at depth {d_str}mm')
 
-def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=32):
+def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=64):
     """
     Shifts a white matter surface inward along a Laplace field.
 
