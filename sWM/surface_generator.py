@@ -120,6 +120,7 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3]):
             # if step==0, get it from neighbour vertices
             zerostep = np.array(np.where(np.logical_and.reduce((stepx == 0, stepy == 0, stepz == 0)))[0])
             for v in zerostep:
+                print(v)
                 stepx[v] = avg_neighbours(F, stepx, v)
                 stepy[v] = avg_neighbours(F, stepy, v)
                 stepz[v] = avg_neighbours(F, stepz, v)
