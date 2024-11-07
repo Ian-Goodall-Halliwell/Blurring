@@ -98,7 +98,7 @@ def process_depth(V, F, dx, dy, dz, laplace_affine, step_size, nsteps, d_str, ou
     nib.save(surf, out_surf_prefix + d_str + 'mm.surf.gii')
     print(f'generated surface at depth {d_str}mm')
 
-def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=64):
+def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=80):
     """
     Shifts a white matter surface inward along a Laplace field.
 
