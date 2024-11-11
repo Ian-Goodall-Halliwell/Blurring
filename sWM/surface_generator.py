@@ -112,13 +112,13 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jo
                 np.where(np.logical_and.reduce((stepx == 0, stepy == 0, stepz == 0)))[0]
             )
 
-            stepx[zerostep] = Parallel(n_jobs=-1)(
+            stepx[zerostep] = Parallel(n_jobs=32)(
                 delayed(avg_neighbours)(F, stepx, v) for v in zerostep
             )
-            stepy[zerostep] = Parallel(n_jobs=-1)(
+            stepy[zerostep] = Parallel(n_jobs=32)(
                 delayed(avg_neighbours)(F, stepy, v) for v in zerostep
             )
-            stepz[zerostep] = Parallel(n_jobs=-1)(
+            stepz[zerostep] = Parallel(n_jobs=32)(
                 delayed(avg_neighbours)(F, stepz, v) for v in zerostep
             )
             # rescale magnitude to a fixed step size
