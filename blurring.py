@@ -155,8 +155,20 @@ def compute_blurring(
             f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.surf.gii",
             output_path,
             f"{tmp_dir}//swm//{bids_id}_{hemi}_sfwm-",
-            [0.0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
+            [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
         )
+
+    if feat.lower() != "adc" or feat.lower() != "fa":
+        volumemap = f"{input_dir}/maps/{bids_id}_space-nativepro_map-{feat}.nii.gz"
+    else:
+        volumemap = f"{input_dir}/maps/{bids_id}_space-nativepro_model-DTI_map-{feat.upper()}.nii.gz"
+
+    pialDataArr = load_gifti_data(
+        f"{input_dir}/maps/{bids_id}_hemi-{hemi}_surf-fsnative_label-pial_{feat}.func.gii"
+    )
+    pialSurfaceArr = load_gifti_data(
+        f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.surf.gii"
+    )
 
     wmBoundaryDataArr = load_gifti_data(
         f"{input_dir}/maps/{bids_id}_hemi-{hemi}_surf-fsnative_label-white_{feat}.func.gii"
@@ -164,25 +176,44 @@ def compute_blurring(
     wmBoundarySurfaceArr = load_gifti_data(
         f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.surf.gii"
     )
-
-    modeofboundary = mode(wmBoundaryDataArr, keepdims=True)
-
-    midthicknessDataArr = load_gifti_data(
-        f"{input_dir}/maps/{bids_id}_hemi-{hemi}_surf-fsnative_label-midthickness_{feat}.func.gii"
-    )
-    midthicknessSurfaceArr = load_gifti_data(
-        f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-midthickness.surf.gii"
-    )
-
     surfarr = [
-        [midthicknessDataArr, midthicknessSurfaceArr],
-        [wmBoundaryDataArr, wmBoundarySurfaceArr],
+        [pialDataArr, pialSurfaceArr],
     ]
-    if feat.lower() != "adc" or feat.lower() != "fa":
-        volumemap = f"{input_dir}/maps/{bids_id}_space-nativepro_map-{feat}.nii.gz"
-    else:
-        volumemap = f"{input_dir}/maps/{bids_id}_space-nativepro_model-DTI_map-{feat.upper()}.nii.gz"
-    for surf in [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]:
+
+    for ratio in [0.2, 0.4, 0.6, 0.8]:
+        command_new = [
+            os.path.join(workbench_path, "wb_command"),
+            "-surface-cortex-layer",
+            f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.surf.gii",
+            f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.surf.gii",
+            ratio,
+            f"{tmp_dir}//swm//{bids_id}_{hemi}_cortex-{ratio}.surf.gii",
+        ]
+        subprocess.run(command_new)
+        subprocess.run(
+            [
+                os.path.join(workbench_path, "wb_command"),
+                "-volume-to-surface-mapping",
+                volumemap,
+                f"{tmp_dir}//swm//{bids_id}_{hemi}_cortex-{ratio}.surf.gii",
+                f"{tmp_dir}//swm//{bids_id}_{hemi}_cortex-{ratio}_metric.func.gii",
+                "-trilinear",
+            ]
+        )
+        surfarr.append(
+            [
+                load_gifti_data(
+                    f"{tmp_dir}//swm//{bids_id}_{hemi}_cortex-{ratio}_metric.func.gii"
+                ),
+                load_gifti_data(
+                    f"{tmp_dir}//swm//{bids_id}_{hemi}_cortex-{ratio}.surf.gii"
+                ),
+            ]
+        )
+
+    surfarr.append([wmBoundaryDataArr, wmBoundarySurfaceArr])
+
+    for surf in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]:
         subprocess.run(
             [
                 os.path.join(workbench_path, "wb_command"),
@@ -204,14 +235,12 @@ def compute_blurring(
             ]
         )
 
-    distances = np.zeros(shape=(len(midthicknessDataArr), len(surfarr) - 1))
-    dataArr = np.zeros(shape=(len(midthicknessDataArr), len(surfarr)))
-    dataArr_nonmode = np.zeros(
-        shape=(len(midthicknessDataArr), len(surfarr)), dtype=np.float32
-    )
+    distances = np.zeros(shape=(len(pialDataArr), len(surfarr) - 1))
+    dataArr = np.zeros(shape=(len(pialDataArr), len(surfarr)))
+    dataArr_nonmode = np.zeros(shape=(len(pialDataArr), len(surfarr)), dtype=np.float32)
     for e, ds in enumerate(surfarr):
         data, surf = ds
-        dataArr[:, e] = np.divide(data, modeofboundary.mode[0])
+        # dataArr[:, e] = np.divide(data, modeofboundary.mode[0])
         dataArr_nonmode[:, e] = data
         if e == len(surfarr) - 1:
             break
@@ -221,9 +250,7 @@ def compute_blurring(
 
         distances[:, e] = distance
 
-    blurring = np.zeros(
-        shape=(len(midthicknessDataArr), len(surfarr) - 1), dtype=np.float32
-    )
+    blurring = np.zeros(shape=(len(pialDataArr), len(surfarr) - 1), dtype=np.float32)
     for i in range(len(dataArr) - 1):
         gradient = computegrad(dataArr[i], distances[i])
         gradient = np.nan_to_num(gradient)
