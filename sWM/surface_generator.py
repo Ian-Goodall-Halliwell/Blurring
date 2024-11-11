@@ -87,9 +87,10 @@ def process_depth(
         # if step==0, get it from neighbour vertices
         zerostep = np.where((stepx == 0) & (stepy == 0) & (stepz == 0))[0]
         if zerostep.size > 0:
-            stepx[zerostep] = Parallel(n_jobs=n_jobs)(
-                delayed(avg_neighbours)(F, stepx, v) for v in zerostep
-            )
+            stepx[zerostep] = Parallel(
+                n_jobs=n_jobs,
+                batch_size=(len(zerostep) // n_jobs) if n_jobs != -1 else 1,
+            )(delayed(avg_neighbours)(F, stepx, v) for v in zerostep)
             stepy[zerostep] = Parallel(n_jobs=n_jobs)(
                 delayed(avg_neighbours)(F, stepy, v) for v in zerostep
             )
@@ -114,7 +115,7 @@ def process_depth(
     print(f"generated surface at depth {d_str}mm")
 
 
-def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=-1):
+def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=250):
     """
     Shifts a white matter surface inward along a Laplace field.
 
