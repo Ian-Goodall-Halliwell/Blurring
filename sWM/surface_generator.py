@@ -142,7 +142,7 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jo
     # load data
     surf = nib.load(in_surf)
     V = surf.get_arrays_from_intent("NIFTI_INTENT_POINTSET")[0].data
-    # F = surf.get_arrays_from_intent("NIFTI_INTENT_TRIANGLE")[0].data
+    F = surf.get_arrays_from_intent("NIFTI_INTENT_TRIANGLE")[0].data
     # folder = "./joblib_memmap"
     # try:
     #     os.mkdir(folder)
