@@ -58,7 +58,6 @@ def avg_neighbours(F, cdat, n):
 
     # Use np.nanmean to compute the mean of the vertex-wise data
     out = np.nanmean(cdat[v])
-    print(out)
     return out
 
 
