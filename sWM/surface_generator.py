@@ -61,7 +61,7 @@ def arg2float_list(arg):
     return list(map(float, arg.split(",")))
 
 
-def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=1):
+def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=-1):
     print("starting surface shift")
 
     # load data
