@@ -89,13 +89,13 @@ def process_depth(
         zerostep = np.where((stepx == 0) & (stepy == 0) & (stepz == 0))[0]
         if zerostep.size > 0:
 
-            stepx[zerostep] = Parallel(n_jobs=n_jobs)(
+            stepx[zerostep] = Parallel(n_jobs=n_jobs, batch_size=(len(zerostep)//n_jobs if n_jobs != -1 else 1)))(
                 delayed(avg_neighbours)(F, stepx, v) for v in zerostep
             )
-            stepy[zerostep] = Parallel(n_jobs=n_jobs)(
+            stepy[zerostep] = Parallel(n_jobs=n_jobs,batch_size=(len(zerostep)//n_jobs if n_jobs != -1 else 1))(
                 delayed(avg_neighbours)(F, stepy, v) for v in zerostep
             )
-            stepz[zerostep] = Parallel(n_jobs=n_jobs)(
+            stepz[zerostep] = Parallel(n_jobs=n_jobs,batch_size=(len(zerostep)//n_jobs if n_jobs != -1 else 1))(
                 delayed(avg_neighbours)(F, stepz, v) for v in zerostep
             )
         # rescale magnitude to a fixed step size
