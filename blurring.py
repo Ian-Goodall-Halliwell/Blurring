@@ -4,8 +4,6 @@ from scipy.stats import mode
 import subprocess
 import os
 from sWM import laplace_solver, surface_generator
-import ants
-from ants.ops import resample_image_to_target
 import scipy
 import pandas as pd
 
@@ -69,7 +67,6 @@ def fixmatrix(path, inputmap, outputmap, basemap, BIDS_ID, temppath, wb_path, ma
     ]
 
     subprocess.run(command3)
-
 
 
 def load_gifti_data(filepath):

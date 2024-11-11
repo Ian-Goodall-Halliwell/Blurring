@@ -8,7 +8,6 @@ from sklearn.gaussian_process.kernels import RBF, WhiteKernel, Matern
 from sklearn.preprocessing import StandardScaler
 
 
-
 def delete_empty_folder(folder_path):
     if not os.listdir(folder_path):
         os.rmdir(folder_path)
@@ -16,10 +15,11 @@ def delete_empty_folder(folder_path):
     else:
         print(f"Folder is not empty: {folder_path}")
 
+
 def main():
     hemis = ["L", "R"]
-    datadir = "C:/Users/Ian/Documents/zblur"
-    
+    datadir = "E:/data/derivatives/zbrains_blur"
+
     for fold in os.listdir(datadir):
         delete_empty_folder(os.path.join(datadir, fold))
 
@@ -80,7 +80,9 @@ def main():
                     R_distances_array[:, :, int(e)] = distances
             e += 1
 
-    intensities_array = np.concatenate((L_intensities_array, R_intensities_array), axis=0)
+    intensities_array = np.concatenate(
+        (L_intensities_array, R_intensities_array), axis=0
+    )
     distances_array = np.concatenate((L_distances_array, R_distances_array), axis=0)
 
     distances_array_reshaped = np.zeros((len(distances_array), 12, 160))
@@ -96,7 +98,7 @@ def main():
                     )
         # print(x)
 
-    with open('output.pkl', 'wb') as f:
+    with open("output.pkl", "wb") as f:
         pickle.dump((intensities_array, distances_array_reshaped), f)
 
     return intensities_array, distances_array_reshaped
@@ -146,10 +148,11 @@ def plot_gpr_samples(gpr_model, n_samples, ax):
     ax.set_ylabel("y")
     # ax.set_ylim([-3, 3])
 
-if not os.path.exists('output.pkl'):
+
+if not os.path.exists("output.pkl"):
     intensities_array, distances_array_reshaped = main()
 else:
-    with open('output.pkl', 'rb') as f:
+    with open("output.pkl", "rb") as f:
         intensities_array, distances_array_reshaped = pickle.load(f)
 
 # Flatten the data
@@ -171,7 +174,9 @@ for x in range(intensities_scaled.shape[0]):
     vert_intensities = intensities_scaled[x, :, :].flatten()
     vert_distances = distances_array_reshaped[x, :, :].flatten().reshape(-1, 1)
 
-    kernel = 1.0 * Matern(length_scale=1.0, length_scale_bounds=(1e-1, 10.0), nu=1.5) + WhiteKernel(noise_level=1, noise_level_bounds=(1e-2, 1e2))
+    kernel = 1.0 * Matern(
+        length_scale=1.0, length_scale_bounds=(1e-1, 10.0), nu=1.5
+    ) + WhiteKernel(noise_level=1, noise_level_bounds=(1e-2, 1e2))
     gpr = GaussianProcessRegressor(kernel=kernel, random_state=0)
 
     fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
@@ -183,14 +188,20 @@ for x in range(intensities_scaled.shape[0]):
     # plot posterior
     gpr.fit(vert_distances, vert_intensities)
     plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[1])
-    axs[1].scatter(vert_distances[:, 0], vert_intensities, color="red", zorder=10, label="Observations")
+    axs[1].scatter(
+        vert_distances[:, 0],
+        vert_intensities,
+        color="red",
+        zorder=10,
+        label="Observations",
+    )
     axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
     axs[1].set_title("Samples from posterior distribution")
 
     fig.suptitle("Matérn kernel", fontsize=18)
     plt.tight_layout()
     plt.show()
-    print('e')
+    print("e")
 
 
 ############################################################################################################
@@ -233,8 +244,6 @@ LDavgacrosstrial_reshaped = LDavgacrosstrial_reshaped[mask]
 # test2 = LDavgacrosstrial_reshaped[-1000:-501]
 # test3 = LIavgacrosstrial[-500:-1]
 # test4 = LIavgacrosstrial[-1000:-501]
-
-
 
 
 plt.close()

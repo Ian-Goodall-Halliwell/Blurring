@@ -36,6 +36,7 @@ from scipy.interpolate import RegularGridInterpolator
 from joblib import Parallel, delayed
 from tqdm import tqdm
 
+
 def avg_neighbours(F, cdat, n):
     """
     Averages vertex-wise data at vertex n with its neighboring vertices.
@@ -53,12 +54,26 @@ def avg_neighbours(F, cdat, n):
     # Cache the results of np.where and np.unique
     frows = np.where(F == n)[0]
     v = np.unique(F[frows, :])
-    
+
     # Use np.nanmean to compute the mean of the vertex-wise data
     out = np.nanmean(cdat[v])
     return out
 
-def process_depth(V, F, dx, dy, dz, laplace_affine, step_size, nsteps, d_str, out_surf_prefix, surf, n_jobs):
+
+def process_depth(
+    V,
+    F,
+    dx,
+    dy,
+    dz,
+    laplace_affine,
+    step_size,
+    nsteps,
+    d_str,
+    out_surf_prefix,
+    surf,
+    n_jobs,
+):
     V = copy.deepcopy(V)
     # apply inverse affine to surface to get to matrix space
     V[:, :] = V - laplace_affine[:3, 3].T
@@ -82,7 +97,7 @@ def process_depth(V, F, dx, dy, dz, laplace_affine, step_size, nsteps, d_str, ou
                 delayed(avg_neighbours)(F, stepz, v) for v in zerostep
             )
         # rescale magnitude to a fixed step size
-        magnitude = np.sqrt(stepx ** 2 + stepy ** 2 + stepz ** 2)
+        magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
         nonzero_magnitude = magnitude > 0
         stepx[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
         stepy[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
@@ -95,10 +110,11 @@ def process_depth(V, F, dx, dy, dz, laplace_affine, step_size, nsteps, d_str, ou
     for xyz in range(3):
         V[:, xyz] = V[:, xyz] * (laplace_affine[xyz, xyz])
     V[:, :] = V + laplace_affine[:3, 3].T
-    nib.save(surf, out_surf_prefix + d_str + 'mm.surf.gii')
-    print(f'generated surface at depth {d_str}mm')
+    nib.save(surf, out_surf_prefix + d_str + "mm.surf.gii")
+    print(f"generated surface at depth {d_str}mm")
 
-def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=80):
+
+def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=-1):
     """
     Shifts a white matter surface inward along a Laplace field.
 
@@ -117,15 +133,15 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jo
     -------
     None
     """
-    print('starting surface shift')
+    print("starting surface shift")
 
     # load data
     surf = nib.load(in_surf)
-    V = surf.get_arrays_from_intent('NIFTI_INTENT_POINTSET')[0].data
-    F = surf.get_arrays_from_intent('NIFTI_INTENT_TRIANGLE')[0].data
+    V = surf.get_arrays_from_intent("NIFTI_INTENT_POINTSET")[0].data
+    F = surf.get_arrays_from_intent("NIFTI_INTENT_TRIANGLE")[0].data
     laplace = nib.load(in_laplace)
     lp = laplace.get_fdata()
-    print('loaded data and parameters')
+    print("loaded data and parameters")
 
     # Get image resolution
     xres = laplace.affine[0, 0]
@@ -136,7 +152,7 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jo
     depth_vox = [(depth / xres) for depth in depth_mm]
 
     # Convert depth values to strings with a specific format
-    depth_str = [f'{d:.1f}' for d in depth_mm]  # Use one decimal place
+    depth_str = [f"{d:.1f}" for d in depth_mm]  # Use one decimal place
 
     step_size = 0.1  # vox
     max_iters = int(np.max(np.diff(depth_vox)) / step_size) * 10
@@ -149,9 +165,28 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jo
     dy = dy / yres
     dz = dz / zres
     for nsteps, d_str in zip(np.diff([0] + depth_mm) / step_size, depth_str):
-        print('processing depth: ', d_str)
-        process_depth(V, F, dx, dy, dz, laplace.affine, step_size, nsteps, d_str, out_surf_prefix, surf, n_jobs)
+        print("processing depth: ", d_str)
+        process_depth(
+            V,
+            F,
+            dx,
+            dy,
+            dz,
+            laplace.affine,
+            step_size,
+            nsteps,
+            d_str,
+            out_surf_prefix,
+            surf,
+            n_jobs,
+        )
 
 
+if __name__ == "__main__":
+    import sys
+
+    shift_surface(
+        sys.argv[1], sys.argv[2], sys.argv[3], depth_mm=sys.argv[4], n_jobs=sys.argv[5]
+    )
 # Example usage:
 # shift_surface('hemi-L_label-white.surf.gii', 'laplace-wm.nii.gz', 'hemi-L_label-sWF_depth-')
