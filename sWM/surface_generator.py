@@ -34,6 +34,7 @@ import nibabel as nib
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 import sys
+from joblib import Parallel, delayed
 
 
 def avg_neighbours(F, cdat, n):
@@ -110,10 +111,16 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jo
             zerostep = np.array(
                 np.where(np.logical_and.reduce((stepx == 0, stepy == 0, stepz == 0)))[0]
             )
-            for v in zerostep:
-                stepx[v] = avg_neighbours(F, stepx, v)
-                stepy[v] = avg_neighbours(F, stepy, v)
-                stepz[v] = avg_neighbours(F, stepz, v)
+
+            stepx[zerostep] = Parallel(n_jobs=-1)(
+                delayed(avg_neighbours)(F, stepx, v) for v in zerostep
+            )
+            stepy[zerostep] = Parallel(n_jobs=-1)(
+                delayed(avg_neighbours)(F, stepy, v) for v in zerostep
+            )
+            stepz[zerostep] = Parallel(n_jobs=-1)(
+                delayed(avg_neighbours)(F, stepz, v) for v in zerostep
+            )
             # rescale magnitude to a fixed step size
             magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
             for m in range(len(magnitude)):
