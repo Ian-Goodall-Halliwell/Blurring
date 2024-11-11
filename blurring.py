@@ -164,24 +164,37 @@ def compute_blurring(
     else:
         volumemap = f"{input_dir}/maps/{bids_id}_space-nativepro_model-DTI_map-{feat.upper()}.nii.gz"
 
-    pialDataArr = load_gifti_data(
-        f"{input_dir}/maps/{bids_id}_hemi-{hemi}_surf-fsnative_label-pial_{feat}.func.gii"
-    )
+    # pialDataArr = load_gifti_data(
+    #     f"{input_dir}/maps/{bids_id}_hemi-{hemi}_surf-fsnative_label-pial_{feat}.func.gii"
+    # )
     pialSurfaceArr = load_gifti_data(
         f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.surf.gii"
     )
-
+    subprocess.run(
+        [
+            os.path.join(workbench_path, "wb_command"),
+            "-volume-to-surface-mapping",
+            volumemap,
+            f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.surf.gii",
+            f"{tmp_dir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.func.gii"
+            "-trilinear",
+        ]
+    )
+    pialDataArr = load_gifti_data(
+        f"{tmp_dir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.func.gii"
+    )
     wmBoundaryDataArr = load_gifti_data(
         f"{input_dir}/maps/{bids_id}_hemi-{hemi}_surf-fsnative_label-white_{feat}.func.gii"
     )
     wmBoundarySurfaceArr = load_gifti_data(
         f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.surf.gii"
     )
+
     surfarr = [
         [pialDataArr, pialSurfaceArr],
     ]
 
-    for ratio in [0.2, 0.4, 0.6, 0.8]:
+    for ratio in [0.8, 0.6, 0.4, 0.2]:
         command_new = [
             os.path.join(workbench_path, "wb_command"),
             "-surface-cortex-layer",
