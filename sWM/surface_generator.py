@@ -33,8 +33,9 @@ import copy
 import nibabel as nib
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, dump, load
 from tqdm import tqdm
+import os
 
 
 def avg_neighbours(F, cdat, n):
@@ -87,6 +88,7 @@ def process_depth(
         # if step==0, get it from neighbour vertices
         zerostep = np.where((stepx == 0) & (stepy == 0) & (stepz == 0))[0]
         if zerostep.size > 0:
+
             stepx[zerostep] = Parallel(n_jobs=n_jobs)(
                 delayed(avg_neighbours)(F, stepx, v) for v in zerostep
             )
@@ -139,6 +141,15 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jo
     surf = nib.load(in_surf)
     V = surf.get_arrays_from_intent("NIFTI_INTENT_POINTSET")[0].data
     F = surf.get_arrays_from_intent("NIFTI_INTENT_TRIANGLE")[0].data
+    folder = "./joblib_memmap"
+    try:
+        os.mkdir(folder)
+    except FileExistsError:
+        pass
+
+    data_filename_memmap = os.path.join(folder, "data_memmap")
+    dump(F, data_filename_memmap)
+    F = load(data_filename_memmap, mmap_mode="r")
     laplace = nib.load(in_laplace)
     lp = laplace.get_fdata()
     print("loaded data and parameters")
