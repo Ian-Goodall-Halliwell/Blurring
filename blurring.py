@@ -200,7 +200,7 @@ def compute_blurring(
             "-surface-cortex-layer",
             f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.surf.gii",
             f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.surf.gii",
-            ratio,
+            str(ratio),
             f"{tmp_dir}//swm//{bids_id}_{hemi}_cortex-{ratio}.surf.gii",
         ]
         subprocess.run(command_new)
