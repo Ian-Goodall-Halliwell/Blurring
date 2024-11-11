@@ -92,17 +92,17 @@ def process_depth(
             print(stepx[v])
             stepy[v] = avg_neighbours(F, stepy, v)
             stepz[v] = avg_neighbours(F, stepz, v)
-        # if zerostep.size > 0:
+        if zerostep.size > 0:
 
-        #     stepx[zerostep] = Parallel(n_jobs=n_jobs)(
-        #         delayed(avg_neighbours)(F, stepx, v) for v in zerostep
-        #     )
-        #     stepy[zerostep] = Parallel(n_jobs=n_jobs)(
-        #         delayed(avg_neighbours)(F, stepy, v) for v in zerostep
-        #     )
-        #     stepz[zerostep] = Parallel(n_jobs=n_jobs)(
-        #         delayed(avg_neighbours)(F, stepz, v) for v in zerostep
-        #     )
+            stepx[zerostep] = Parallel(n_jobs=n_jobs)(
+                delayed(avg_neighbours)(F, stepx, v) for v in zerostep
+            )
+            stepy[zerostep] = Parallel(n_jobs=n_jobs)(
+                delayed(avg_neighbours)(F, stepy, v) for v in zerostep
+            )
+            stepz[zerostep] = Parallel(n_jobs=n_jobs)(
+                delayed(avg_neighbours)(F, stepz, v) for v in zerostep
+            )
 
         # rescale magnitude to a fixed step size
         magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)

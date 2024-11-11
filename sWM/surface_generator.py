@@ -34,7 +34,8 @@ import nibabel as nib
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 import sys
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, dump, load
+import os
 
 
 def avg_neighbours(F, cdat, n):
@@ -53,8 +54,7 @@ def avg_neighbours(F, cdat, n):
     """
     frows = np.where(F == n)[0]
     v = np.unique(F[frows, :])
-    out = np.nanmean(cdat[v])
-    return out
+    return np.nanmean(cdat[v])
 
 
 def arg2float_list(arg):
@@ -68,6 +68,15 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jo
     surf = nib.load(in_surf)
     V = surf.get_arrays_from_intent("NIFTI_INTENT_POINTSET")[0].data
     F = surf.get_arrays_from_intent("NIFTI_INTENT_TRIANGLE")[0].data
+    folder = "./joblib_memmap"
+    try:
+        os.mkdir(folder)
+    except FileExistsError:
+        pass
+
+    data_filename_memmap = os.path.join(folder, "data_memmap")
+    dump(F, data_filename_memmap)
+    F = load(data_filename_memmap, mmap_mode="r")
     laplace = nib.load(in_laplace)
     lp = laplace.get_fdata()
     print("loaded data and parameters")
@@ -112,13 +121,13 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jo
                 np.where(np.logical_and.reduce((stepx == 0, stepy == 0, stepz == 0)))[0]
             )
 
-            stepx[zerostep] = Parallel(n_jobs=32)(
+            stepx[zerostep] = Parallel(n_jobs=n_jobs)(
                 delayed(avg_neighbours)(F, stepx, v) for v in zerostep
             )
-            stepy[zerostep] = Parallel(n_jobs=32)(
+            stepy[zerostep] = Parallel(n_jobs=n_jobs)(
                 delayed(avg_neighbours)(F, stepy, v) for v in zerostep
             )
-            stepz[zerostep] = Parallel(n_jobs=32)(
+            stepz[zerostep] = Parallel(n_jobs=n_jobs)(
                 delayed(avg_neighbours)(F, stepz, v) for v in zerostep
             )
             # rescale magnitude to a fixed step size
