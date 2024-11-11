@@ -58,6 +58,7 @@ def avg_neighbours(F, cdat, n):
 
     # Use np.nanmean to compute the mean of the vertex-wise data
     out = np.nanmean(cdat[v])
+    print(out)
     return out
 
 
@@ -92,12 +93,14 @@ def process_depth(
             stepx[zerostep] = Parallel(n_jobs=n_jobs)(
                 delayed(avg_neighbours)(F, stepx, v) for v in zerostep
             )
+            print(stepx)
             stepy[zerostep] = Parallel(n_jobs=n_jobs)(
                 delayed(avg_neighbours)(F, stepy, v) for v in zerostep
             )
             stepz[zerostep] = Parallel(n_jobs=n_jobs)(
                 delayed(avg_neighbours)(F, stepz, v) for v in zerostep
             )
+
         # rescale magnitude to a fixed step size
         magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
         nonzero_magnitude = magnitude > 0
