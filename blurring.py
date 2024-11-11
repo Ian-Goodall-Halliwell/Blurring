@@ -43,17 +43,17 @@ def fixmatrix(path, inputmap, outputmap, basemap, BIDS_ID, temppath, wb_path, ma
         for row in m_matrix:
             f.write(" ".join(map(str, row)) + "\n")
 
-    command4 = [
-        os.path.join(wb_path, "wb_command"),
-        "-convert-affine",
-        "-from-world",
-        os.path.join(temppath, f"{BIDS_ID}_real_world_affine.txt"),
-        "-to-world",
-        "-inverse",
-        os.path.join(temppath, f"{BIDS_ID}_real_world_affine.txt"),
-    ]
+    # command4 = [
+    #     os.path.join(wb_path, "wb_command"),
+    #     "-convert-affine",
+    #     "-from-world",
+    #     os.path.join(temppath, f"{BIDS_ID}_real_world_affine.txt"),
+    #     "-to-world",
+    #     "-inverse",
+    #     os.path.join(temppath, f"{BIDS_ID}_real_world_affine.txt"),
+    # ]
 
-    subprocess.run(command4)
+    # subprocess.run(command4)
 
     command3 = [
         os.path.join(wb_path, "wb_command"),
