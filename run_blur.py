@@ -136,8 +136,8 @@ def process_path(
 
 
 with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
-    for patient in patients:
-        for path in patients[patient]:
+    for patient in controls:
+        for path in controls[patient]:
             process_path(
                 patient,
                 path,
