@@ -156,7 +156,7 @@ def compute_blurring(
             output_path,
             f"{tmp_dir}//swm//{bids_id}_{hemi}_sfwm-",
             [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
-            n_jobs=250,
+            n_jobs=120,
         )
 
     if feat.lower() != "adc" or feat.lower() != "fa":
