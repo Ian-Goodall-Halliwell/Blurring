@@ -169,81 +169,49 @@ intensities_scaled = scaler.transform(intensities_flat).reshape(intensities_arra
 # distances_scaled = scaler.transform(distances_flat).reshape(distances_array_reshaped.shape)
 
 
-# Get per-vertex profiles
-for x in range(intensities_scaled.shape[0]):
-    vert_intensities = intensities_scaled[x, :, :].flatten()
-    vert_distances = distances_array_reshaped[x, :, :].flatten().reshape(-1, 1)
+# # Get per-vertex profiles
+# for x in range(intensities_scaled.shape[0]):
+#     vert_intensities = intensities_scaled[x, :, :].flatten()
+#     vert_distances = distances_array_reshaped[x, :, :].flatten().reshape(-1, 1)
 
-    kernel = 1.0 * Matern(
-        length_scale=1.0, length_scale_bounds=(1e-1, 10.0), nu=1.5
-    ) + WhiteKernel(noise_level=1, noise_level_bounds=(1e-2, 1e2))
-    gpr = GaussianProcessRegressor(kernel=kernel, random_state=0)
+#     kernel = 1.0 * Matern(
+#         length_scale=1.0, length_scale_bounds=(1e-1, 10.0), nu=1.5
+#     ) + WhiteKernel(noise_level=1, noise_level_bounds=(1e-2, 1e2))
+#     gpr = GaussianProcessRegressor(kernel=kernel, random_state=0)
 
-    fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
-    n_samples = 5
-    # plot prior
-    plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[0])
-    axs[0].set_title("Samples from prior distribution")
+#     fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
+#     n_samples = 5
+#     # plot prior
+#     plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[0])
+#     axs[0].set_title("Samples from prior distribution")
 
-    # plot posterior
-    gpr.fit(vert_distances, vert_intensities)
-    plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[1])
-    axs[1].scatter(
-        vert_distances[:, 0],
-        vert_intensities,
-        color="red",
-        zorder=10,
-        label="Observations",
-    )
-    axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
-    axs[1].set_title("Samples from posterior distribution")
+#     # plot posterior
+#     gpr.fit(vert_distances, vert_intensities)
+#     plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[1])
+#     axs[1].scatter(
+#         vert_distances[:, 0],
+#         vert_intensities,
+#         color="red",
+#         zorder=10,
+#         label="Observations",
+#     )
+#     axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
+#     axs[1].set_title("Samples from posterior distribution")
 
-    fig.suptitle("Matérn kernel", fontsize=18)
-    plt.tight_layout()
-    plt.show()
-    print("e")
+#     fig.suptitle("Matérn kernel", fontsize=18)
+#     plt.tight_layout()
+#     plt.show()
+#     print("e")
 
 
 ############################################################################################################
 ### PLOTTING ###
 ############################################################################################################
-LIavgacrosstrial = np.mean(L_intensities_array, axis=0).transpose()
-LIstdacrosstrial = np.std(L_intensities_array, axis=0).transpose()
+LIavgacrosstrial = np.mean(intensities_array, axis=0).transpose()
+LIstdacrosstrial = np.std(intensities_array, axis=0).transpose()
 
-LDavgacrosstrial = np.mean(L_distances_array, axis=0).transpose()
-LDstdacrosstrial = np.std(L_distances_array, axis=0).transpose()
-
-
-LDavgacrosstrial_reshaped = np.zeros((len(LDavgacrosstrial), 12))
-for en, x in enumerate(LDavgacrosstrial):
-    for e in range(len(x)):
-        if e == 0:
-            LDavgacrosstrial_reshaped[en, e] = -x[e]
-            LDavgacrosstrial_reshaped[en, e + 1] = 0
-        else:
-            LDavgacrosstrial_reshaped[en, e + 1] = (
-                LDavgacrosstrial_reshaped[en, e] + x[e]
-            )
-    print(x)
-
-
-threshold = 5.5
-mask = (
-    LDavgacrosstrial_reshaped[:, 11] <= threshold
-)  # Assuming you want to check the first trial
-
-
-LIavgacrosstrial = LIavgacrosstrial[mask]
-LIstdacrosstrial = LIstdacrosstrial[mask]
-
-LDavgacrosstrial = LDavgacrosstrial[mask]
-LDstdacrosstrial = LDstdacrosstrial[mask]
-LDavgacrosstrial_reshaped = LDavgacrosstrial_reshaped[mask]
-
-# test = LDavgacrosstrial_reshaped[-500:-1]
-# test2 = LDavgacrosstrial_reshaped[-1000:-501]
-# test3 = LIavgacrosstrial[-500:-1]
-# test4 = LIavgacrosstrial[-1000:-501]
+LDavgacrosstrial_reshaped = np.mean(distances_array_reshaped, axis=0).transpose()
+LDstdacrosstrial = np.std(distances_array_reshaped, axis=0).transpose()
 
 
 plt.close()
@@ -266,40 +234,11 @@ plt.title("Line Graph for Each Row in LIavgacrosstrial with Standard Deviations"
 plt.grid(True)
 plt.show()
 
+LIavgacrosstrial = np.mean(intensities_array, axis=0).transpose()
+LIstdacrosstrial = np.std(intensities_array, axis=0).transpose()
 
-LIavgacrosstrial = np.mean(L_intensities_array, axis=2)
-LIstdacrosstrial = np.std(L_intensities_array, axis=2)
-
-LDavgacrosstrial = np.mean(L_distances_array, axis=2)
-LDstdacrosstrial = np.std(L_distances_array, axis=2)
-
-LDavgacrosstrial_reshaped = np.zeros((len(LDavgacrosstrial), 12))
-for en, x in enumerate(LDavgacrosstrial):
-    for e in range(len(x)):
-        if e == 0:
-            LDavgacrosstrial_reshaped[en, e] = -x[e]
-            LDavgacrosstrial_reshaped[en, e + 1] = 0
-        else:
-            LDavgacrosstrial_reshaped[en, e + 1] = (
-                LDavgacrosstrial_reshaped[en, e] + x[e]
-            )
-    print(x)
-threshold = 5.5
-mask = (
-    LDavgacrosstrial_reshaped[:, 11] <= threshold
-)  # Assuming you want to check the first trial
-
-
-LIavgacrosstrial = LIavgacrosstrial[mask]
-LIstdacrosstrial = LIstdacrosstrial[mask]
-
-LDavgacrosstrial = LDavgacrosstrial[mask]
-LDstdacrosstrial = LDstdacrosstrial[mask]
-LDavgacrosstrial_reshaped = LDavgacrosstrial_reshaped[mask]
-# test = LDavgacrosstrial_reshaped[-500:-1]
-# test2 = LDavgacrosstrial_reshaped[-1000:-501]
-# test3 = LIavgacrosstrial[-500:-1]
-# test4 = LIavgacrosstrial[-1000:-501]
+LDavgacrosstrial_reshaped = np.mean(distances_array_reshaped, axis=0).transpose()
+LDstdacrosstrial = np.std(distances_array_reshaped, axis=0).transpose()
 
 
 import matplotlib.pyplot as plt
