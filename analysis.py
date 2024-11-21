@@ -18,7 +18,7 @@ def delete_empty_folder(folder_path):
 
 def main():
     hemis = ["L", "R"]
-    datadir = "E:/data/derivatives/zbrains_blur"
+    datadir = "C:/Users/Ian/Documents/zbrains_blur"
 
     for fold in os.listdir(datadir):
         delete_empty_folder(os.path.join(datadir, fold))
@@ -38,10 +38,10 @@ def main():
             totalsessions.append(ses)
 
     totalsubs = len(totalsessions)
-    L_intensities_array = np.zeros((4842, 12, totalsubs))
-    L_distances_array = np.zeros((4842, 11, totalsubs))
-    R_intensities_array = np.zeros((4842, 12, totalsubs))
-    R_distances_array = np.zeros((4842, 11, totalsubs))
+    L_intensities_array = np.zeros((4842, 16, totalsubs))
+    L_distances_array = np.zeros((4842, 15, totalsubs))
+    R_intensities_array = np.zeros((4842, 16, totalsubs))
+    R_distances_array = np.zeros((4842, 15, totalsubs))
 
     e = 0
     for fold in os.listdir(datadir):
@@ -85,7 +85,7 @@ def main():
     )
     distances_array = np.concatenate((L_distances_array, R_distances_array), axis=0)
 
-    distances_array_reshaped = np.zeros((len(distances_array), 12, 160))
+    distances_array_reshaped = np.zeros((len(distances_array), 16, totalsubs))
     for en, x in enumerate(distances_array):
         for v in range(x.shape[1]):
             for e in range(x.shape[0]):
@@ -121,7 +121,7 @@ def plot_gpr_samples(gpr_model, n_samples, ax):
     ax : matplotlib axis
         The matplotlib axis where to plot the samples.
     """
-    x = np.linspace(-3, 10, 1000)
+    x = np.linspace(-5, 6, 1000)
     X = x.reshape(-1, 1)
 
     y_mean, y_std = gpr_model.predict(X, return_std=True)
@@ -214,7 +214,7 @@ LDavgacrosstrial = np.mean(L_distances_array, axis=0).transpose()
 LDstdacrosstrial = np.std(L_distances_array, axis=0).transpose()
 
 
-LDavgacrosstrial_reshaped = np.zeros((len(LDavgacrosstrial), 12))
+LDavgacrosstrial_reshaped = np.zeros((len(LDavgacrosstrial), 16))
 for en, x in enumerate(LDavgacrosstrial):
     for e in range(len(x)):
         if e == 0:
@@ -273,7 +273,7 @@ LIstdacrosstrial = np.std(L_intensities_array, axis=2)
 LDavgacrosstrial = np.mean(L_distances_array, axis=2)
 LDstdacrosstrial = np.std(L_distances_array, axis=2)
 
-LDavgacrosstrial_reshaped = np.zeros((len(LDavgacrosstrial), 12))
+LDavgacrosstrial_reshaped = np.zeros((len(LDavgacrosstrial), 16))
 for en, x in enumerate(LDavgacrosstrial):
     for e in range(len(x)):
         if e == 0:
