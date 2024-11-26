@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel, Matern
 from sklearn.preprocessing import StandardScaler
+import seaborn as sns
+import numpy as np
+import scipy.stats as stats
+from joblib import Parallel, delayed
 
 
 def delete_empty_folder(folder_path):
@@ -107,173 +111,246 @@ def main():
     return intensities_array, distances_array_reshaped
 
 
-def plot_gpr_samples(gpr_model, n_samples, ax):
-    """Plot samples drawn from the Gaussian process model.
-
-    If the Gaussian process model is not trained then the drawn samples are
-    drawn from the prior distribution. Otherwise, the samples are drawn from
-    the posterior distribution. Be aware that a sample here corresponds to a
-    function.
-
-    Parameters
-    ----------
-    gpr_model : `GaussianProcessRegressor`
-        A :class:`~sklearn.gaussian_process.GaussianProcessRegressor` model.
-    n_samples : int
-        The number of samples to draw from the Gaussian process distribution.
-    ax : matplotlib axis
-        The matplotlib axis where to plot the samples.
-    """
-    x = np.linspace(-4, 4, 1000)
-    X = x.reshape(-1, 1)
-
-    y_mean, y_std = gpr_model.predict(X, return_std=True)
-    y_samples = gpr_model.sample_y(X, n_samples)
-
-    for idx, single_prior in enumerate(y_samples.T):
-        ax.plot(
-            x,
-            single_prior,
-            linestyle="--",
-            alpha=0.7,
-            label=f"Sampled function #{idx + 1}",
-        )
-    ax.plot(x, y_mean, color="black", label="Mean")
-    ax.fill_between(
-        x,
-        y_mean - (y_std * 2.94),
-        y_mean + (y_std * 2.94),
-        alpha=0.1,
-        color="black",
-        label=r"$\pm$ 1 std. dev.",
-    )
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    # ax.set_ylim([-3, 3])
-
-
 if not os.path.exists("output.pkl"):
     intensities_array, distances_array_reshaped = main()
 else:
     with open("output.pkl", "rb") as f:
         intensities_array, distances_array_reshaped = pickle.load(f)
 
-# Initialize the StandardScaler
-scaler = StandardScaler()
 
-# Create an array to store the scaled data
-intensities_scaled = np.zeros_like(intensities_array)
+intensities_array = intensities_array[:, :-5, :]
+distances_array_reshaped = distances_array_reshaped[:, :-5, :]
 
-# Loop through each item in axis 1 and scale independently
-for i in range(intensities_array.shape[1]):
-    intarr = intensities_array[:, i, :].flatten().reshape(-1, 1)
-    scaler.fit(intarr)
-    intensities_scaled[:, i, :] = scaler.transform(intarr).reshape(
-        intensities_array.shape[0], -1
+mean_array = np.zeros([distances_array_reshaped.shape[0]])
+confidence_interval_array = np.zeros([distances_array_reshaped.shape[0], 2])
+
+
+def process_vertex(x):
+    vert_intensities = intensities_array[x, :, :]
+    vert_distances = distances_array_reshaped[x, :, :]
+    highest_coeff_values = []
+    for z in range(vert_intensities.shape[1]):
+        vert_distances_single = vert_distances[:, z]
+        vert_intensities_single = vert_intensities[:, z]
+
+        # Fit a quadratic function
+        coeffs = np.polyfit(vert_distances_single, vert_intensities_single, 2)
+        highest_coeff = abs(coeffs[0])
+        highest_coeff_values.append(highest_coeff)
+
+    # Calculate mean and standard deviation
+    mean = np.mean(highest_coeff_values)
+    stddev = np.std(highest_coeff_values)
+
+    # Calculate 95% confidence interval
+    confidence_level = 0.95
+    degrees_freedom = len(highest_coeff_values) - 1
+    confidence_interval = stats.t.interval(
+        confidence_level,
+        df=degrees_freedom,
+        loc=mean,
+        scale=stats.sem(highest_coeff_values),
     )
-
-print("Original data:", intensities_array)
-print("Scaled data:", intensities_scaled)
-
-# Get per-vertex profiles
-for x in range(intensities_scaled.shape[0]):
-    vert_intensities = intensities_scaled[x, :, :].flatten()
-    vert_distances = distances_array_reshaped[x, :, :].flatten().reshape(-1, 1)
-
-    kernel = 1.0 * Matern(
-        length_scale=1.0, length_scale_bounds=(1e-2, 10.0), nu=1.5
-    ) + WhiteKernel(noise_level=0.1, noise_level_bounds=(1e-1, 1e1))
-    gpr = GaussianProcessRegressor(kernel=kernel, random_state=0, normalize_y=True)
-
-    fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
-    n_samples = 5
-    # plot prior
-    plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[0])
-    axs[0].set_title("Samples from prior distribution")
-
-    # plot posterior
-    gpr.fit(vert_distances, vert_intensities)
-    plot_gpr_samples(gpr, n_samples=n_samples, ax=axs[1])
-    axs[1].scatter(
-        vert_distances[:, 0],
-        vert_intensities,
-        color="red",
-        zorder=10,
-        label="Observations",
-    )
-    axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
-    axs[1].set_title("Samples from posterior distribution")
-
-    fig.suptitle("Matérn kernel", fontsize=18)
-    plt.tight_layout()
-    plt.show()
-    print("e")
+    return mean, confidence_interval
 
 
-############################################################################################################
-### PLOTTING ###
-############################################################################################################
-LIavgacrosstrial = np.mean(intensities_array, axis=0).transpose()
-LIstdacrosstrial = np.std(intensities_array, axis=0).transpose()
+from tqdm import tqdm
 
-LDavgacrosstrial = np.mean(distances_array_reshaped, axis=0).transpose()
-LDstdacrosstrial = np.std(distances_array_reshaped, axis=0).transpose()
+# Parallelize the computation
+results = Parallel(n_jobs=-1)(
+    delayed(process_vertex)(x) for x in tqdm(range(intensities_array.shape[0]))
+)
 
+# Store the results
+for x, (mean, confidence_interval) in enumerate(results):
+    mean_array[x] = mean
+    confidence_interval_array[x] = confidence_interval
 
-plt.close()
+print(f"Mean array: {mean_array}")
+print(f"Confidence interval array: {confidence_interval_array}")
 
-# Plotting
-plt.figure(figsize=(10, 6))
-plt.clf()
-# Set x-axis limits
-plt.xlim(-4, 5)
-
-for row, std_dev, dists in zip(LIavgacrosstrial, LIstdacrosstrial, LDavgacrosstrial):
-    plt.errorbar(dists, row, yerr=std_dev, marker="o", capsize=5)
-
-plt.xlabel("Distance")
-plt.ylabel("Value")
-plt.title("Line Graph for Each Row in LIavgacrosstrial with Standard Deviations")
-# plt.legend([f"Row {i+1}" for i in range(LIavgacrosstrial.shape[0])], loc="upper right")
-plt.grid(True)
-plt.show()
-
-LIavgacrosstrial = np.mean(intensities_array, axis=2)
-LIstdacrosstrial = np.std(intensities_array, axis=2)
-
-LDavgacrosstrial = np.mean(distances_array_reshaped, axis=2)
-LDstdacrosstrial = np.std(distances_array_reshaped, axis=2)
+# Save variables to a file
+with open("output.pkl", "wb") as f:
+    pickle.dump((mean_array, confidence_interval_array), f)
 
 
-lastfew = LDavgacrosstrial[-500:]
+### LOAD PATIENT DATA
 
-# Create a mask where the last column of LDavgacrosstrial is greater than 4.2
-mask = (LDavgacrosstrial[:, -1] > 4.2) | (LDavgacrosstrial[:, 0] < -4.8)
+# Load L and R versions of distances and intensities
+L_distances = np.genfromtxt(
+    "E:/data/derivatives/zbrains_blur/PX001/sub-PX001_ses-01_L_T1map_blur_distances.csv",
+    delimiter=",",
+    skip_header=1,
+).transpose()
+L_intensities = np.genfromtxt(
+    "E:/data/derivatives/zbrains_blur/PX001/sub-PX001_ses-01_L_T1map_blur_intensities.csv",
+    delimiter=",",
+    skip_header=1,
+).transpose()
 
-# Use np.where to find the indices that satisfy the condition
+R_distances = np.genfromtxt(
+    "E:/data/derivatives/zbrains_blur/PX001/sub-PX001_ses-01_R_T1map_blur_distances.csv",
+    delimiter=",",
+    skip_header=1,
+).transpose()
+R_intensities = np.genfromtxt(
+    "E:/data/derivatives/zbrains_blur/PX001/sub-PX001_ses-01_R_T1map_blur_intensities.csv",
+    delimiter=",",
+    skip_header=1,
+).transpose()
+
+# Concatenate L and R versions
+distances = np.concatenate((L_distances, R_distances), axis=0)
+intensities = np.concatenate((L_intensities, R_intensities), axis=0)
+
+# Load mask
+mask_R = np.genfromtxt(
+    "C:/Users/Ian/Documents/GitHub/Blurring/output/sub-PX001_ses-02_space-nativepro_T1w_brainthresholdedSurface.csv",
+    delimiter=",",
+    skip_header=1,
+).transpose()
+
+mask_L = np.zeros([R_intensities.shape[0]])
 
 
-LIavgacrosstrial = LIavgacrosstrial[~mask]
-LIstdacrosstrial = LIstdacrosstrial[~mask]
+# Convert mask to boolean array
+mask_R = mask_R.astype(bool)
+mask_L = mask_L.astype(bool)
 
-LDavgacrosstrial = LDavgacrosstrial[~mask]
-LDstdacrosstrial = LDstdacrosstrial[~mask]
+mask = np.concatenate((mask_L, mask_R), axis=0)
+
+
+def reshape_distances(distances):
+    RDavgacrosstrial_reshaped = np.zeros((len(distances), 16))
+    for en, x in enumerate(distances):
+        for e in range(x.shape[0]):
+            if e < 4:
+                RDavgacrosstrial_reshaped[en, e] = -(np.sum(x[e:5]))
+            elif e == 4:
+                RDavgacrosstrial_reshaped[en, e] = -x[e]
+                RDavgacrosstrial_reshaped[en, e + 1] = 0
+            else:
+                RDavgacrosstrial_reshaped[en, e + 1] = (
+                    RDavgacrosstrial_reshaped[en, e] + x[e]
+                )
+    return RDavgacrosstrial_reshaped
+
+
+distances_reshaped = reshape_distances(distances)
+
+intensities_full = intensities[~mask]
+
+
+distances_reshaped_full = distances_reshaped[~mask]
+
+confidence_interval_array_full = confidence_interval_array[~mask]
+
+mean_array_full = mean_array[~mask]
+
+outarray = np.zeros([intensities_full.shape[0]])
+# Fit a quadratic function
+for z in range(intensities_full.shape[0]):
+    vert_distances_single = distances_reshaped_full[z, :]
+    vert_intensities_single = intensities_full[z, :]
+
+    # Fit a quadratic function
+    coeffs = np.polyfit(vert_distances_single, vert_intensities_single, 2)
+    highest_coeff = abs(coeffs[0])
+    outarray[z] = highest_coeff
+
+e1 = 0
+outs_full = []
+for i in range(len(outarray)):
+    if outarray[i] < confidence_interval_array_full[i][0]:
+        outs_full.append(mean_array_full[i] - outarray[i])
+        e1 += 1
+        print(f"Outlier at index {i} with value {outarray[i]}")
+
+
+intensities = intensities[mask]
+
+
+distances_reshaped = distances_reshaped[mask]
+
+confidence_interval_array = confidence_interval_array[mask]
+
+mean_array = mean_array[mask]
+
+
+outarray = np.zeros([intensities.shape[0]])
+# Fit a quadratic function
+for z in range(intensities.shape[0]):
+    vert_distances_single = distances_reshaped[z, :]
+    vert_intensities_single = intensities[z, :]
+
+    # Fit a quadratic function
+    coeffs = np.polyfit(vert_distances_single, vert_intensities_single, 2)
+    highest_coeff = abs(coeffs[0])
+    outarray[z] = highest_coeff
+
+e = 0
+outs = []
+for i in range(len(outarray)):
+    if outarray[i] < confidence_interval_array[i][0]:
+        outs.append(mean_array[i] - outarray[i])
+        e += 1
+        print(f"Outlier at index {i} with value {outarray[i]}")
+
+
+import numpy as np
+import scipy.stats as stats
 import matplotlib.pyplot as plt
 
+# Example data for demonstration purposes
+data1 = outs  # Replace with your actual data
+data2 = outs_full  # Replace with your actual data
 
-# Plotting
-plt.figure(figsize=(10, 6))
+# Perform a t-test to compare the two distributions
+# t_stat, p_value = stats.ttest_ind(data1, data2)
+from scipy.stats import permutation_test
 
-# Set x-axis limits
-plt.xlim(-4, 5)
 
-for row, std_dev, dists in zip(LIavgacrosstrial, LIstdacrosstrial, LDavgacrosstrial):
-    plt.errorbar(dists, row, yerr=std_dev, marker="o", capsize=5)
-# LDavgacrosstrial_reshaped = LDavgacrosstrial_reshaped[mask]
-plt.xlabel("Distance")
-plt.ylabel("Value")
-plt.title("Line Graph for Each Row in LIavgacrosstrial with Standard Deviations")
-# plt.legend([f"Row {i+1}" for i in range(LIavgacrosstrial.shape[0])], loc="upper right")
-plt.grid(True)
+def mean_diff(sample1, sample2):
+    return np.mean(sample1) - np.mean(sample2)
+
+
+results = permutation_test(
+    (data1, data2), statistic=mean_diff, n_resamples=100000, alternative="greater"
+)
+stat = results.statistic
+p = results.pvalue
+print(f"stat: {stat}")
+print(f"P: {p}")
+
+# Plotting the distributions
+fig, ax1 = plt.subplots(figsize=(10, 6))
+
+# Plot data1 on the first axes
+ax1.hist(
+    data1, bins=35, alpha=0.7, label="Lesional tissue", color="blue", edgecolor="black"
+)
+ax1.set_xlabel("Blurstat value")
+ax1.set_ylabel("Frequency (lesional tissue)", color="blue")
+ax1.tick_params(axis="y", labelcolor="blue")
+ax1.set_xlim(0, 100)  # Adjust the limits as needed
+
+# Create a twin axes sharing the same x-axis
+ax2 = ax1.twinx()
+
+# Plot data2 on the twin axes
+ax2.hist(
+    data2,
+    bins=200,
+    alpha=0.7,
+    label="Non-lesional tissue",
+    color="red",
+    edgecolor="black",
+)
+ax2.set_ylabel("Frequency (non-lesional tissue)", color="red")
+ax2.tick_params(axis="y", labelcolor="red")
+
+# Set the title and legend
+fig.suptitle("Distributions of lesional and non-lesional tissue")
+fig.legend(loc="upper right")
+
 plt.show()
-print("e")
