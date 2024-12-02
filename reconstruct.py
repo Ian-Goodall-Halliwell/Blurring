@@ -61,7 +61,7 @@ def process_hemispheres(diff_from_mean, base_path, output_prefix):
 if __name__ == "__main__":
     with open("outs.pkl", "rb") as f:
         diff_from_mean = pkl.load(f)
-    base_path = "C:/Users/Ian/Documents/GitHub/Blurring/src/data"
+    base_path = "src/data"
 
     process_hemispheres(diff_from_mean, base_path, "difference_from_mean")
 
@@ -75,3 +75,12 @@ if __name__ == "__main__":
         fullout = pkl.load(f)
 
     process_hemispheres(fullout, base_path, "fullout")
+
+    original_mean = diff_from_mean + mean
+    confidence_interval_lower = confidence[:, 1]*1.6 < original_mean
+
+
+    diff_from_mean[~confidence_interval_lower] = np.nan
+    process_hemispheres(diff_from_mean, base_path, "difference_from_mean_confidence")
+
+    print("done")

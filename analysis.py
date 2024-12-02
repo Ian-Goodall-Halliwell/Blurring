@@ -6,6 +6,7 @@ from joblib import Parallel, delayed
 from scipy.stats import permutation_test
 from utils import load_data, reshape_distances, process_vertex, analyze_data
 import nibabel as nib
+from random import sample
 
 
 def delete_empty_folder(folder_path):
@@ -41,19 +42,196 @@ else:
 intensities_array = intensities_array[:, :-5, :]
 distances_array_reshaped = distances_array_reshaped[:, :-5, :]
 
+
+
+
 mean_array = np.zeros([distances_array_reshaped.shape[0]])
 confidence_interval_array = np.zeros([distances_array_reshaped.shape[0], 2])
 std_array = np.zeros([distances_array_reshaped.shape[0]])
 mask_midline = ~np.concatenate(
     list(
         nib.load(
-            f"C:/Users/Ian/Documents/GitHub/Blurring/src/data/fsLR-5k.{hemi}.mask.shape.gii"
+            f"src/data/fsLR-5k.{hemi}.mask.shape.gii"
         )
         .darrays[0]
         .data
         for hemi in ["L", "R"]
     )
 ).astype(bool)
+
+
+
+# intensities_mean_clean  = intensities_array.copy()
+# distances_mean_clean = distances_array_reshaped.copy()
+
+# intensities_mean_clean[mask_midline,:] = np.nan
+# distances_mean_clean[mask_midline,:] = np.nan
+
+
+# # Calculate the mean across the final dimension
+# intensities_mean_clean = np.std(intensities_mean_clean[~mask_midline], axis=0).transpose()
+# distances_mean_clean = np.mean(distances_mean_clean[~mask_midline], axis=0).transpose()
+
+
+
+# # Plot the data
+# plt.figure(figsize=(10, 6), facecolor='black')
+
+# # Loop through each row in the first dimension and plot
+# for i in range(intensities_mean_clean.shape[0]):
+#     plt.plot(distances_mean_clean[i, :], intensities_mean_clean[i, :], label=f'Row {i+1}')
+
+# # Set the x and y limits
+# plt.xlim(-6, 2)
+
+# # Customize the plot appearance
+# plt.xlabel('Distances', color='white')
+# plt.ylabel('Subject Intensities (SD)', color='white')
+# plt.title('SD of Subject Intensities vs. Distances', color='white')
+
+# # Customize the axes
+# plt.gca().spines['bottom'].set_color('white')
+# plt.gca().spines['top'].set_color('white')
+# plt.gca().spines['right'].set_color('white')
+# plt.gca().spines['left'].set_color('white')
+# plt.gca().tick_params(axis='x', colors='white')
+# plt.gca().tick_params(axis='y', colors='white')
+
+# # Add a grid
+# plt.grid(color='gray', linestyle='--', linewidth=0.5)
+
+# # Set the background color of the plot area
+# plt.gca().set_facecolor('black')
+
+# # Show the plot
+# plt.show()
+
+
+# intensities_mean_clean  = intensities_array.copy()
+# distances_mean_clean = distances_array_reshaped.copy()
+
+# intensities_mean_clean[mask_midline,:] = np.nan
+# distances_mean_clean[mask_midline,:] = np.nan
+
+
+# # Calculate the mean across the final dimension
+# intensities_mean_clean = np.mean(intensities_mean_clean[~mask_midline], axis=0).transpose()
+# distances_mean_clean = np.mean(distances_mean_clean[~mask_midline], axis=0).transpose()
+
+# # Plot the data
+# plt.figure(figsize=(10, 6), facecolor='black')
+
+# # Loop through each row in the first dimension and plot
+# for i in range(intensities_mean_clean.shape[0]):
+#     plt.plot(distances_mean_clean[i, :], intensities_mean_clean[i, :], label=f'Row {i+1}')
+
+# # Set the x and y limits
+# plt.xlim(-6, 2)
+
+# # Customize the plot appearance
+# plt.xlabel('Distances', color='white')
+# plt.ylabel('Vertex Intensities (Mean)', color='white')
+# plt.title('Mean Subject Intensities vs. Distances', color='white')
+
+# # Customize the axes
+# plt.gca().spines['bottom'].set_color('white')
+# plt.gca().spines['top'].set_color('white')
+# plt.gca().spines['right'].set_color('white')
+# plt.gca().spines['left'].set_color('white')
+# plt.gca().tick_params(axis='x', colors='white')
+# plt.gca().tick_params(axis='y', colors='white')
+
+# # Add a grid
+# plt.grid(color='gray', linestyle='--', linewidth=0.5)
+
+# # Set the background color of the plot area
+# plt.gca().set_facecolor('black')
+
+# # Show the plot
+# plt.show()
+
+# # Calculate the mean across the final dimension
+# intensities_mean_clean = np.std(intensities_array, axis=-1)
+# distances_mean_clean = np.mean(distances_array_reshaped, axis=-1)
+
+# intensities_mean_clean[mask_midline,:] = np.nan
+# distances_mean_clean[mask_midline,:] = np.nan
+
+
+
+# # Plot the data
+# plt.figure(figsize=(10, 6), facecolor='black')
+
+# # Loop through each row in the first dimension and plot
+# for i in range(intensities_mean_clean.shape[0]):
+#     plt.plot(distances_mean_clean[i, :], intensities_mean_clean[i, :], label=f'Row {i+1}')
+
+# # Set the x and y limits
+# plt.xlim(-6, 2)
+
+# # Customize the plot appearance
+# plt.xlabel('Distances', color='white')
+# plt.ylabel('Vertex Intensities (SD)', color='white')
+# plt.title('SD of Vertex Intensities vs. Distances', color='white')
+
+# # Customize the axes
+# plt.gca().spines['bottom'].set_color('white')
+# plt.gca().spines['top'].set_color('white')
+# plt.gca().spines['right'].set_color('white')
+# plt.gca().spines['left'].set_color('white')
+# plt.gca().tick_params(axis='x', colors='white')
+# plt.gca().tick_params(axis='y', colors='white')
+
+# # Add a grid
+# plt.grid(color='gray', linestyle='--', linewidth=0.5)
+
+# # Set the background color of the plot area
+# plt.gca().set_facecolor('black')
+
+# # Show the plot
+# plt.show()
+
+
+# # Calculate the mean across the final dimension
+# intensities_mean_clean = np.mean(intensities_array, axis=-1)
+# distances_mean_clean = np.mean(distances_array_reshaped, axis=-1)
+
+# intensities_mean_clean[mask_midline,:] = np.nan
+# distances_mean_clean[mask_midline,:] = np.nan
+
+
+
+# # Plot the data
+# plt.figure(figsize=(10, 6), facecolor='black')
+
+# # Loop through each row in the first dimension and plot
+# for i in range(intensities_mean_clean.shape[0]):
+#     plt.plot(distances_mean_clean[i, :], intensities_mean_clean[i, :], label=f'Row {i+1}')
+
+# # Set the x and y limits
+# plt.xlim(-6, 2)
+
+# # Customize the plot appearance
+# plt.xlabel('Distances', color='white')
+# plt.ylabel('Vertex Intensities (Mean)', color='white')
+# plt.title('Mean Vertex Intensities vs. Distances', color='white')
+
+# # Customize the axes
+# plt.gca().spines['bottom'].set_color('white')
+# plt.gca().spines['top'].set_color('white')
+# plt.gca().spines['right'].set_color('white')
+# plt.gca().spines['left'].set_color('white')
+# plt.gca().tick_params(axis='x', colors='white')
+# plt.gca().tick_params(axis='y', colors='white')
+
+# # Add a grid
+# plt.grid(color='gray', linestyle='--', linewidth=0.5)
+
+# # Set the background color of the plot area
+# plt.gca().set_facecolor('black')
+
+# # Show the plot
+# plt.show()
 
 # Parallelize the computation
 results = Parallel(n_jobs=-1)(
@@ -69,6 +247,7 @@ for x, (mean, confidence_interval, std) in enumerate(results):
     confidence_interval_array[x] = confidence_interval
     std_array[x] = std
 
+
 print(f"Mean array: {mean_array}")
 print(f"Confidence interval array: {confidence_interval_array}")
 print(f"Standard deviation array: {std_array}")
@@ -80,23 +259,23 @@ with open("mean_conf_arr.pkl", "wb") as f:
 
 # Load L and R versions of distances and intensities
 L_distances = np.genfromtxt(
-    "E:/data/derivatives/zbrains_blur/PX001/sub-PX001_ses-01_L_T1map_blur_distances.csv",
+    "PX001/sub-PX001_ses-01_L_T1map_blur_distances.csv",
     delimiter=",",
     skip_header=1,
 ).transpose()
 L_intensities = np.genfromtxt(
-    "E:/data/derivatives/zbrains_blur/PX001/sub-PX001_ses-01_L_T1map_blur_intensities.csv",
+    "PX001/sub-PX001_ses-01_L_T1map_blur_intensities.csv",
     delimiter=",",
     skip_header=1,
 ).transpose()
 
 R_distances = np.genfromtxt(
-    "E:/data/derivatives/zbrains_blur/PX001/sub-PX001_ses-01_R_T1map_blur_distances.csv",
+    "PX001/sub-PX001_ses-01_R_T1map_blur_distances.csv",
     delimiter=",",
     skip_header=1,
 ).transpose()
 R_intensities = np.genfromtxt(
-    "E:/data/derivatives/zbrains_blur/PX001/sub-PX001_ses-01_R_T1map_blur_intensities.csv",
+    "PX001/sub-PX001_ses-01_R_T1map_blur_intensities.csv",
     delimiter=",",
     skip_header=1,
 ).transpose()
@@ -107,7 +286,7 @@ intensities = np.concatenate((L_intensities, R_intensities), axis=0)
 
 # Load mask
 mask_R = np.genfromtxt(
-    "C:/Users/Ian/Documents/GitHub/Blurring/output/sub-PX001_ses-02_space-nativepro_T1w_brainthresholdedSurface.csv",
+    "output/sub-PX001_ses-02_space-nativepro_T1w_brainthresholdedSurface.csv",
     delimiter=",",
     skip_header=1,
 ).transpose()
@@ -148,25 +327,46 @@ with open("outs.pkl", "wb") as f:
 with open("fullout.pkl", "wb") as f:
     pickle.dump(fullout, f)
 
-
-# Perform a permutation test to compare the two distributions
 def mean_diff(sample1, sample2):
     return np.mean(sample1) - np.mean(sample2)
+
+def permutation_test(sample1, sample2, num_permutations=10000):
+    observed_diff = mean_diff(sample1, sample2)
+    combined = np.concatenate([sample1, sample2])
+    count = 0
+
+    for _ in range(num_permutations):
+        np.random.shuffle(combined)
+        perm_sample1 = combined[:len(sample1)]
+        perm_sample2 = combined[len(sample1):]
+        perm_diff = mean_diff(perm_sample1, perm_sample2)
+        if perm_diff >= observed_diff:
+            count += 1
+
+    p_value = count / num_permutations
+    return observed_diff, p_value
 
 
 outs = outs[~np.isnan(outs)]
 outs_full = outs_full[~np.isnan(outs_full)]
-results = permutation_test(
-    (outs, outs_full),
-    statistic=mean_diff,
-    n_resamples=100000,
-    alternative="greater",
-    random_state=42,
-)
-stat = results.statistic
-p = results.pvalue
-print(f"stat: {stat}")
-print(f"P: {p}")
+
+observed_diff, p_value = permutation_test(outs, outs_full, num_permutations=1000000)
+
+
+
+# allvals = outs_positive[~np.isnan(outs_positive)]
+# results = permutation_test(
+#     (allvals, outs),
+#     statistic=mean_diff,
+#     n_resamples=100000,
+#     alternative="greater",
+#     random_state=42,
+#     vectorized=False
+# )
+# stat = results.statistic
+# p = results.pvalue
+print(f"observed diff: {observed_diff}")
+print(f"P: {p_value}")
 
 # Plotting the distributions
 fig, ax1 = plt.subplots(figsize=(10, 6))
@@ -180,7 +380,7 @@ ax1.hist(
     color="blue",
     edgecolor="black",
 )
-ax1.set_xlabel("Blurstat value")
+ax1.set_xlabel("Quantitative blur")
 ax1.set_ylabel("Frequency (lesional tissue)", color="blue")
 ax1.tick_params(axis="y", labelcolor="blue")
 ax1.set_xlim(-100, 100)  # Adjust the limits as needed

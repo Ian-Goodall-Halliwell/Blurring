@@ -2,6 +2,7 @@ import numpy as np
 from scipy import stats
 import os
 import nibabel as nib
+import matplotlib.pyplot as plt
 
 
 def load_data(datadir, hemis):
@@ -82,22 +83,49 @@ def process_vertex(x, intensities_array, distances_array_reshaped, mask):
 
         # Fit a quadratic function
         coeffs = np.polyfit(vert_distances_single, vert_intensities_single, 2)
+        # # Generate x values for plotting the fitted curve
+        # x_fit = np.linspace(vert_distances_single.min(), vert_distances_single.max(), 100)
+        # y_fit = np.polyval(coeffs, x_fit)
+
+        # # Plot the original data points
+        # plt.scatter(vert_distances_single, vert_intensities_single, label='Data Points')
+
+        # # Plot the fitted quadratic function
+        # plt.plot(x_fit, y_fit, color='red', label='Fitted Quadratic Curve')
+
+        # # Add labels and legend
+        # plt.xlabel('Vertical Distances')
+        # plt.ylabel('Vertical Intensities')
+        # plt.legend()
+
+        # # Show the plot
+        # plt.show()
         highest_coeff = abs(coeffs[0])
         highest_coeff_values.append(highest_coeff)
     highest_coeff_values = np.array(highest_coeff_values)
-    # Calculate mean and standard deviation
-    mean = np.mean(highest_coeff_values[~np.isnan(highest_coeff_values)])
-    stddev = np.std(highest_coeff_values[~np.isnan(highest_coeff_values)])
 
+    # sterr = stats.sem(highest_coeff_values[~np.isnan(highest_coeff_values)], ddof=degrees_freedom),
     # Calculate 95% confidence interval
-    confidence_level = 0.95
-    degrees_freedom = len(highest_coeff_values[~np.isnan(highest_coeff_values)]) - 1
-    confidence_interval = stats.t.interval(
-        confidence_level,
-        df=degrees_freedom,
-        loc=mean,
-        scale=stats.sem(highest_coeff_values[~np.isnan(highest_coeff_values)]),
-    )
+    # Remove NaN values
+    cleaned_data = highest_coeff_values[~np.isnan(highest_coeff_values)]
+
+    # Calculate the sample mean
+    mean = np.mean(cleaned_data)
+    stddev = np.std(cleaned_data)
+    # Calculate the standard error of the mean
+    sterr = np.std(cleaned_data, ddof=1) / np.sqrt(len(cleaned_data))
+
+    # Determine the critical value from the t-distribution
+    confidence_level = 0.997
+    degrees_freedom = len(cleaned_data) - 1
+    critical_value = stats.t.ppf((1 + confidence_level) / 2, degrees_freedom)
+
+    # Calculate the margin of error
+    margin_of_error = critical_value * sterr
+
+    # Determine the confidence interval
+    confidence_interval = (mean - margin_of_error, mean + margin_of_error)
+
     return mean, confidence_interval, stddev
 
 
