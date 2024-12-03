@@ -27,7 +27,6 @@ patients = {
     "PX069": [],  #
     # # "PX076": [],
 }
-# workingdir = "/host/verges/tank/data/ian/blur"
 workingdir = "/data/mica3/BIDS_MICs/derivatives/zbrains_blur"
 datadir = "/data/mica3/BIDS_MICs/derivatives"
 micapipe = "micapipe_v0.2.0"
@@ -42,6 +41,10 @@ current_file_directory = os.path.dirname(os.path.abspath(__file__))
 # Sort out and loop through paths
 
 import os
+
+if not os.path.exists(workingdir):
+    os.mkdir(workingdir)
+
 
 controls = {}
 
