@@ -1,5 +1,3 @@
-from blurring import compute_blurring
-import tempfile
 import os
 import sys
 from joblib import Parallel, delayed
@@ -66,7 +64,7 @@ patients = {patient: sorted(patients[patient]) for patient in patients}
 controls = {control: sorted(controls[control]) for control in controls}
 
 
-def process_path(
+def process_path_func(
     patient,
     path,
     workingdir,
@@ -100,35 +98,36 @@ def process_path(
     except Exception as e:
         print(e)
         print(f"Error with {path}")
+        exit(1)
 
 
-# for patient in controls:
-#     for path in controls[patient]:
-#         process_path(
-#             patient,
-#             path,
-#             workingdir,
-#             datadir,
-#             micapipe,
-#             freesurfer,
-#             wb_path,
-#             fs_path,
-#             current_file_directory,
-#         )
+for patient in controls:
+    for path in controls[patient]:
+        process_path_func(
+            patient,
+            path,
+            workingdir,
+            datadir,
+            micapipe,
+            freesurfer,
+            wb_path,
+            fs_path,
+            current_file_directory,
+        )
 
 
-Parallel(n_jobs=4)(
-    delayed(process_path)(
-        patient,
-        path,
-        workingdir,
-        datadir,
-        micapipe,
-        freesurfer,
-        wb_path,
-        fs_path,
-        current_file_directory,
-    )
-    for patient in controls
-    for path in controls[patient]
-)
+# Parallel(n_jobs=4)(
+#     delayed(process_path_func)(
+#         patient,
+#         path,
+#         workingdir,
+#         datadir,
+#         micapipe,
+#         freesurfer,
+#         wb_path,
+#         fs_path,
+#         current_file_directory,
+#     )
+#     for patient in controls
+#     for path in controls[patient]
+# )
