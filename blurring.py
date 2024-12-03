@@ -6,6 +6,7 @@ import os
 from sWM import laplace_solver, surface_generator
 import scipy
 import pandas as pd
+import shutil
 
 
 def fixmatrix(path, inputmap, outputmap, basemap, BIDS_ID, temppath, wb_path, mat_path):
@@ -279,7 +280,7 @@ def compute_blurring(
             f"{bids_id}_{hemi}_{feat}-surf-fsnative_NONgrad.func.gii",
         ),
     )
-    os.rename(
+    shutil.copy(
         os.path.join(
             input_dir,
             "surf",
