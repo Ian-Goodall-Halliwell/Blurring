@@ -150,33 +150,33 @@ def process_path(
         print(f"Error with {path}")
 
 
-# for patient in controls:
-#     for path in controls[patient]:
-#         process_path(
-#             patient,
-#             path,
-#             workingdir,
-#             datadir,
-#             micapipe,
-#             freesurfer,
-#             wb_path,
-#             fs_path,
-#             current_file_directory,
-#         )
+for patient in controls:
+    for path in controls[patient]:
+        process_path(
+            patient,
+            path,
+            workingdir,
+            datadir,
+            micapipe,
+            freesurfer,
+            wb_path,
+            fs_path,
+            current_file_directory,
+        )
 
 
-Parallel(n_jobs=4)(
-    delayed(process_path)(
-        patient,
-        path,
-        workingdir,
-        datadir,
-        micapipe,
-        freesurfer,
-        wb_path,
-        fs_path,
-        current_file_directory,
-    )
-    for patient in controls
-    for path in controls[patient]
-)
+# Parallel(n_jobs=4)(
+#     delayed(process_path)(
+#         patient,
+#         path,
+#         workingdir,
+#         datadir,
+#         micapipe,
+#         freesurfer,
+#         wb_path,
+#         fs_path,
+#         current_file_directory,
+#     )
+#     for patient in controls
+#     for path in controls[patient]
+# )
