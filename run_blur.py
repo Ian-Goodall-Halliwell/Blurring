@@ -1,7 +1,9 @@
 from blurring import compute_blurring
 import tempfile
 import os
+import sys
 from joblib import Parallel, delayed
+import subprocess
 
 patients = {
     "PX001": [],  #
@@ -76,75 +78,25 @@ def process_path(
     current_file_directory,
 ):
     try:
-        if not os.path.exists(os.path.join(workingdir, patient)):
-            os.mkdir(os.path.join(workingdir, patient))
-        with tempfile.TemporaryDirectory(
-            dir=os.path.join(workingdir, patient)
-        ) as tmpdir:
-            compute_blurring(
-                input_dir=os.path.join(
-                    datadir, micapipe, path.split("_")[0], path.split("_")[1]
-                ),
-                surf_dir=os.path.join(datadir, freesurfer, path),
-                bids_id=path,
-                hemi="L",
-                feat="T1map",
-                workbench_path=wb_path,
-                resol="5k",
-                fwhm=5,
-                tmp_dir=tmpdir,
-                fs_path=fs_path,
-                workingdir=os.path.join(workingdir, patient),
-                current_file_directory=current_file_directory,
-            )
-            # os.rename(
-            #     outputfile[0],
-            #     os.path.join(
-            #         workingdir, patient, f"{path}_L_T1map_blur_NONgrad.func.gii"
-            #     ),
-            # )
-            # os.rename(
-            #     outputfile[1],
-            #     os.path.join(
-            #         workingdir, patient, f"{path}_L_T1map_blur_intensities.csv"
-            #     ),
-            # )
-            # os.rename(
-            #     outputfile[2],
-            #     os.path.join(workingdir, patient, f"{path}_L_T1map_blur_distances.csv"),
-            # )
-            compute_blurring(
-                input_dir=os.path.join(
-                    datadir, micapipe, path.split("_")[0], path.split("_")[1]
-                ),
-                surf_dir=os.path.join(datadir, freesurfer, path),
-                bids_id=path,
-                hemi="R",
-                feat="T1map",
-                workbench_path=wb_path,
-                resol="5k",
-                fwhm=5,
-                tmp_dir=tmpdir,
-                fs_path=fs_path,
-                workingdir=os.path.join(workingdir, patient),
-                current_file_directory=current_file_directory,
-            )
-            # os.rename(
-            #     outputfile[0],
-            #     os.path.join(
-            #         workingdir, patient, f"{path}_R_T1map_blur_NONgrad.func.gii"
-            #     ),
-            # )
-            # os.rename(
-            #     outputfile[1],
-            #     os.path.join(
-            #         workingdir, patient, f"{path}_R_T1map_blur_intensities.csv"
-            #     ),
-            # )
-            # os.rename(
-            #     outputfile[2],
-            #     os.path.join(workingdir, patient, f"{path}_R_T1map_blur_distances.csv"),
-            # )
+        subprocess.run(
+            [
+                sys.executable,  # Use the current Python interpreter
+                os.path.join(
+                    current_file_directory, "parallel_func.py"
+                ),  # The script to run
+                patient,
+                path,
+                workingdir,
+                datadir,
+                micapipe,
+                freesurfer,
+                wb_path,
+                fs_path,
+                current_file_directory,
+            ],
+            check=True,
+        )
+
     except Exception as e:
         print(e)
         print(f"Error with {path}")

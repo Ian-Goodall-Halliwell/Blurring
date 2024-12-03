@@ -95,12 +95,9 @@ def compute_blurring(
     hemi,
     feat,
     workbench_path,
-    resol,
-    fwhm,
     tmp_dir,
     fs_path,
     workingdir,
-    current_file_directory,
 ):
 
     base_path = input_dir
@@ -118,9 +115,12 @@ def compute_blurring(
     )
     print(temp_parc_path)
     output_path = os.path.join(workingdir, "swm", f"{bids_id}-laplace.nii.gz")
-    # img = ants.image_read(freesurfer_path)
-    # imgfixed = ants.image_read(f"{input_dir}/{bids_id}_space-nativepro_map-T1map.nii.gz")
-    # resample_image_to_target(imgfixed, img, interp_type='multiLabel', verbose=True).to_filename(temp_parc_path)
+
+    stuctpath = os.path.join(workingdir, "structural")
+
+    if not os.path.exists(stuctpath):
+        os.mkdir(stuctpath)
+
     if not os.path.exists(freesurfer_path):
         subprocess.run(
             [
@@ -266,28 +266,6 @@ def compute_blurring(
 
         distances[:, e] = distance
 
-    # blurring = np.zeros(shape=(len(pialDataArr), len(surfarr) - 1), dtype=np.float32)
-    # for i in range(len(dataArr) - 1):
-    #     gradient = computegrad(dataArr[i], distances[i])
-    #     gradient = np.nan_to_num(gradient)
-    #     if gradient[0] == 0:
-    #         gradient = np.zeros_like(gradient)
-    #     blurring[i] = gradient
-
-    # data_array = nib.gifti.gifti.GiftiDataArray(
-    #     data=blurring,
-    #     intent="NIFTI_INTENT_NORMAL",
-    # )
-
-    # gii = nib.gifti.GiftiImage(darrays=[data_array])
-    # nib.save(
-    #     gii,
-    #     os.path.join(
-    #         tmp_dir,
-    #         f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_grad.func.gii",
-    #     ),
-    # )
-
     data_non_grad = nib.gifti.gifti.GiftiDataArray(
         data=dataArr_nonmode,
         intent="NIFTI_INTENT_NORMAL",
@@ -301,32 +279,16 @@ def compute_blurring(
             f"{bids_id}_{hemi}_{feat}-surf-fsnative_NONgrad.func.gii",
         ),
     )
-
-    # subprocess.run(
-    #     [
-    #         os.path.join(workbench_path, "wb_command"),
-    #         "-metric-resample",
-    #         os.path.join(
-    #             tmp_dir,
-    #             f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad.func.gii",
-    #         ),
-    #         os.path.join(
-    #             input_dir,
-    #             "surf",
-    #             f"{bids_id}_hemi-{hemi}_surf-fsnative_label-sphere.surf.gii",
-    #         ),
-    #         os.path.join(
-    #             current_file_directory,
-    #             f"src/data/fsLR-{resol}.{hemi}.sphere.reg.surf.gii",
-    #         ),
-    #         "BARYCENTRIC",
-    #         os.path.join(
-    #             tmp_dir,
-    #             f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad-output.func.gii",
-    #         ),
-    #     ]
-    # )
-
+    os.rename(
+        os.path.join(
+            input_dir,
+            "surf",
+            f"{bids_id}_hemi-{hemi}_surf-fsnative_label-sphere.surf.gii",
+        ),
+        os.path.join(
+            stuctpath, f"{bids_id}_hemi-{hemi}_surf-fsnative_label-sphere.surf.gii"
+        ),
+    )
     data_dist = nib.gifti.gifti.GiftiDataArray(
         data=distances.astype(np.float32),
         intent="NIFTI_INTENT_NORMAL",
@@ -339,81 +301,6 @@ def compute_blurring(
             f"{bids_id}_{hemi}_{feat}_surf-fsnative_dist.func.gii",
         ),
     )
-
-    # subprocess.run(
-    #     [
-    #         os.path.join(workbench_path, "wb_command"),
-    #         "-metric-resample",
-    #         os.path.join(
-    #             tmp_dir,
-    #             f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_dist.func.gii",
-    #         ),
-    #         os.path.join(
-    #             input_dir,
-    #             "surf",
-    #             f"{bids_id}_hemi-{hemi}_surf-fsnative_label-sphere.surf.gii",
-    #         ),
-    #         os.path.join(
-    #             current_file_directory,
-    #             f"src/data/fsLR-{resol}.{hemi}.sphere.reg.surf.gii",
-    #         ),
-    #         "BARYCENTRIC",
-    #         os.path.join(
-    #             tmp_dir,
-    #             f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_dist-output.func.gii",
-    #         ),
-    #     ]
-    # )
-
-    # data_fslr = nib.load(
-    #     os.path.join(
-    #         tmp_dir,
-    #         f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_NONgrad-output.func.gii",
-    #     )
-    # ).darrays
-    # data_fslr = [x.data for x in data_fslr]
-    # print(data_fslr)
-
-    # df = pd.DataFrame(data_fslr)
-    # df.to_csv(
-    #     os.path.join(
-    #         tmp_dir,
-    #         f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-intensities.csv",
-    #     ),
-    #     index=False,
-    # )
-
-    # data_dist = nib.load(
-    #     os.path.join(
-    #         tmp_dir,
-    #         f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-surf-fsnative_dist-output.func.gii",
-    #     )
-    # ).darrays
-    # data_dist = [x.data for x in data_dist]
-
-    # distancesdf = pd.DataFrame(data_dist)
-    # distancesdf.to_csv(
-    #     os.path.join(
-    #         tmp_dir,
-    #         f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-distances.csv",
-    #     ),
-    #     index=False,
-    # )
-
-    # return [
-    #     os.path.join(
-    #         workingdir,
-    #         f"{bids_id}_{hemi}_{feat}-surf-fsnative_NONgrad.func.gii",
-    #     ),
-    #     os.path.join(
-    #         tmp_dir,
-    #         f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-intensities.csv",
-    #     ),
-    #     os.path.join(
-    #         tmp_dir,
-    #         f"{bids_id}-{hemi}-{feat}-{resol}-{fwhm}-distances.csv",
-    #     ),
-    # ]
 
 
 if __name__ == "__main__":
