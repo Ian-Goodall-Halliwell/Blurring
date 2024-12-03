@@ -157,7 +157,7 @@ def compute_blurring(
             output_path,
             f"{workingdir}//swm//{bids_id}_{hemi}_sfwm-",
             [0.5, 1, 1.5, 2, 2.5, 3],
-            n_jobs=128,
+            n_jobs=32,
         )
     if feat.lower() == "t1map":
         volumemap = f"{input_dir}/anat/{bids_id}_space-nativepro_T1w_brain.nii.gz"
@@ -212,7 +212,7 @@ def compute_blurring(
                 "-volume-to-surface-mapping",
                 volumemap,
                 f"{workingdir}//swm//{bids_id}_{hemi}_cortex-{ratio}.surf.gii",
-                f"{workingdir}//swm//{bids_id}_{hemi}_cortex-{ratio}_metric.func.gii",
+                f"{workingdir}//swm//{bids_id}_{hemi}_{feat}_cortex-{ratio}_metric.func.gii",
                 "-trilinear",
             ]
         )

@@ -164,20 +164,20 @@ for patient in controls:
             current_file_directory,
         )
 
-# with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
-#     Parallel(n_jobs=4)(
-#         delayed(process_path)(
-#             patient,
-#             path,
-#             workingdir,
-#             datadir,
-#             micapipe,
-#             freesurfer,
-#             wb_path,
-#             fs_path,
-#             tmpdir,
-#             current_file_directory,
-#         )
-#         for patient in patients
-#         for path in patients[patient]
-#     )
+with tempfile.TemporaryDirectory(dir=workingdir) as tmpdir:
+    Parallel(n_jobs=4)(
+        delayed(process_path)(
+            patient,
+            path,
+            workingdir,
+            datadir,
+            micapipe,
+            freesurfer,
+            wb_path,
+            fs_path,
+            tmpdir,
+            current_file_directory,
+        )
+        for patient in patients
+        for path in patients[patient]
+    )
