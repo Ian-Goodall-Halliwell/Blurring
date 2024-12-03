@@ -101,33 +101,33 @@ def process_path_func(
         exit(1)
 
 
-# for patient in controls:
-#     for path in controls[patient]:
-#         process_path_func(
-#             patient,
-#             path,
-#             workingdir,
-#             datadir,
-#             micapipe,
-#             freesurfer,
-#             wb_path,
-#             fs_path,
-#             current_file_directory,
-#         )
+for patient in controls:
+    for path in controls[patient]:
+        process_path_func(
+            patient,
+            path,
+            workingdir,
+            datadir,
+            micapipe,
+            freesurfer,
+            wb_path,
+            fs_path,
+            current_file_directory,
+        )
 
 
-Parallel(n_jobs=2)(
-    delayed(process_path_func)(
-        patient,
-        path,
-        workingdir,
-        datadir,
-        micapipe,
-        freesurfer,
-        wb_path,
-        fs_path,
-        current_file_directory,
-    )
-    for patient in controls
-    for path in controls[patient]
-)
+# Parallel(n_jobs=2)(
+#     delayed(process_path_func)(
+#         patient,
+#         path,
+#         workingdir,
+#         datadir,
+#         micapipe,
+#         freesurfer,
+#         wb_path,
+#         fs_path,
+#         current_file_directory,
+#     )
+#     for patient in controls
+#     for path in controls[patient]
+# )
