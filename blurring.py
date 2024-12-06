@@ -7,7 +7,7 @@ from sWM import laplace_solver, surface_generator
 import scipy
 import pandas as pd
 import shutil
-
+from utils import reshape_distances
 
 def fixmatrix(path, inputmap, outputmap, basemap, BIDS_ID, temppath, wb_path, mat_path):
     # Load the .mat file
@@ -179,12 +179,12 @@ def compute_blurring(
             "-volume-to-surface-mapping",
             volumemap,
             f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.surf.gii",
-            f"{workingdir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.func.gii",
+            f"{tmp_dir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.func.gii",
             "-trilinear",
         ]
     )
     pialDataArr = load_gifti_data(
-        f"{workingdir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.func.gii"
+        f"{tmp_dir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.func.gii"
     )
     wmBoundaryDataArr = load_gifti_data(
         f"{input_dir}/maps/{bids_id}_hemi-{hemi}_surf-fsnative_label-white_{feat}.func.gii"
@@ -264,7 +264,7 @@ def compute_blurring(
         nextdata, nextsurt = surfarr[e + 1]
         print(e)
         distance = calcdist(surf, nextsurt)
-
+        distance = reshape_distances(distance)
         distances[:, e] = distance
 
     data_non_grad = nib.gifti.gifti.GiftiDataArray(
