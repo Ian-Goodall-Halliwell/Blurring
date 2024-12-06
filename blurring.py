@@ -264,6 +264,7 @@ def compute_blurring(
         nextdata, nextsurt = surfarr[e + 1]
         print(e)
         distance = calcdist(surf, nextsurt)
+        print(distance.shape)
         distance = reshape_distances(distance)
         distances[:, e] = distance
 
