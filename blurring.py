@@ -265,9 +265,9 @@ def compute_blurring(
         print(e)
         distance = calcdist(surf, nextsurt)
         print(distance.shape)
-        distance = reshape_distances(distance)
         distances[:, e] = distance
 
+    distances = reshape_distances(distances)
     data_non_grad = nib.gifti.gifti.GiftiDataArray(
         data=dataArr_nonmode,
         intent="NIFTI_INTENT_NORMAL",
