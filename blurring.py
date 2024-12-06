@@ -262,9 +262,8 @@ def compute_blurring(
         if e == len(surfarr) - 1:
             break
         nextdata, nextsurt = surfarr[e + 1]
-        print(e)
+        print(f"Distances calculated on surface: {e}")
         distance = calcdist(surf, nextsurt)
-        print(distance.shape)
         distances[:, e] = distance
 
     distances = reshape_distances(distances)
