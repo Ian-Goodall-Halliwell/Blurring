@@ -19,7 +19,7 @@ def delete_empty_folder(folder_path):
 
 def main():
     hemis = ["L", "R"]
-    datadir = "E:/data/derivatives/zbrains_blur"
+    datadir = "E:/zbrains_blur"
 
     for fold in os.listdir(datadir):
         delete_empty_folder(os.path.join(datadir, fold))
@@ -43,22 +43,15 @@ intensities_array = intensities_array[:, :-5, :]
 distances_array_reshaped = distances_array_reshaped[:, :-5, :]
 
 
-
-
 mean_array = np.zeros([distances_array_reshaped.shape[0]])
 confidence_interval_array = np.zeros([distances_array_reshaped.shape[0], 2])
 std_array = np.zeros([distances_array_reshaped.shape[0]])
 mask_midline = ~np.concatenate(
     list(
-        nib.load(
-            f"src/data/fsLR-5k.{hemi}.mask.shape.gii"
-        )
-        .darrays[0]
-        .data
+        nib.load(f"src/data/fsLR-5k.{hemi}.mask.shape.gii").darrays[0].data
         for hemi in ["L", "R"]
     )
 ).astype(bool)
-
 
 
 # intensities_mean_clean  = intensities_array.copy()
@@ -71,7 +64,6 @@ mask_midline = ~np.concatenate(
 # # Calculate the mean across the final dimension
 # intensities_mean_clean = np.std(intensities_mean_clean[~mask_midline], axis=0).transpose()
 # distances_mean_clean = np.mean(distances_mean_clean[~mask_midline], axis=0).transpose()
-
 
 
 # # Plot the data
@@ -158,7 +150,6 @@ mask_midline = ~np.concatenate(
 # distances_mean_clean[mask_midline,:] = np.nan
 
 
-
 # # Plot the data
 # plt.figure(figsize=(10, 6), facecolor='black')
 
@@ -198,7 +189,6 @@ mask_midline = ~np.concatenate(
 
 # intensities_mean_clean[mask_midline,:] = np.nan
 # distances_mean_clean[mask_midline,:] = np.nan
-
 
 
 # # Plot the data
@@ -327,8 +317,10 @@ with open("outs.pkl", "wb") as f:
 with open("fullout.pkl", "wb") as f:
     pickle.dump(fullout, f)
 
+
 def mean_diff(sample1, sample2):
     return np.mean(sample1) - np.mean(sample2)
+
 
 def permutation_test(sample1, sample2, num_permutations=10000):
     observed_diff = mean_diff(sample1, sample2)
@@ -337,8 +329,8 @@ def permutation_test(sample1, sample2, num_permutations=10000):
 
     for _ in range(num_permutations):
         np.random.shuffle(combined)
-        perm_sample1 = combined[:len(sample1)]
-        perm_sample2 = combined[len(sample1):]
+        perm_sample1 = combined[: len(sample1)]
+        perm_sample2 = combined[len(sample1) :]
         perm_diff = mean_diff(perm_sample1, perm_sample2)
         if perm_diff >= observed_diff:
             count += 1
@@ -351,7 +343,6 @@ outs = outs[~np.isnan(outs)]
 outs_full = outs_full[~np.isnan(outs_full)]
 
 observed_diff, p_value = permutation_test(outs, outs_full, num_permutations=1000000)
-
 
 
 # allvals = outs_positive[~np.isnan(outs_positive)]
