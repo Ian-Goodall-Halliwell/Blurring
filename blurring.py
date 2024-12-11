@@ -9,6 +9,7 @@ import pandas as pd
 import shutil
 from utils import reshape_distances
 
+
 def fixmatrix(path, inputmap, outputmap, basemap, BIDS_ID, temppath, wb_path, mat_path):
     # Load the .mat file
     mat = scipy.io.loadmat(
@@ -186,11 +187,24 @@ def compute_blurring(
     pialDataArr = load_gifti_data(
         f"{tmp_dir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.func.gii"
     )
-    wmBoundaryDataArr = load_gifti_data(
-        f"{input_dir}/maps/{bids_id}_hemi-{hemi}_surf-fsnative_label-white_{feat}.func.gii"
-    )
+    # wmBoundaryDataArr = load_gifti_data(
+    #     f"{input_dir}/maps/{bids_id}_hemi-{hemi}_surf-fsnative_label-white_{feat}.func.gii"
+    # )
     wmBoundarySurfaceArr = load_gifti_data(
         f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.surf.gii"
+    )
+    subprocess.run(
+        [
+            os.path.join(workbench_path, "wb_command"),
+            "-volume-to-surface-mapping",
+            volumemap,
+            f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.surf.gii",
+            f"{tmp_dir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.func.gii",
+            "-trilinear",
+        ]
+    )
+    wmBoundaryDataArr = load_gifti_data(
+        f"{tmp_dir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.func.gii"
     )
 
     surfarr = [
@@ -277,7 +291,7 @@ def compute_blurring(
         gii_non_grad,
         os.path.join(
             workingdir,
-            f"{bids_id}_{hemi}_{feat}-surf-fsnative_NONgrad.func.gii",
+            f"{bids_id}_{hemi}_{feat}_surf-fsnative_NONgrad.func.gii",
         ),
     )
     shutil.copy(

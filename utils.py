@@ -20,14 +20,15 @@ def load_data(datadir, hemis):
         sessions = list(set(output_sessions))
         num_sessions += len(sessions)
 
-    L_intensities_array = np.zeros((4842, 16, num_sessions))
-    L_distances_array = np.zeros((4842, 15, num_sessions))
-    R_intensities_array = np.zeros((4842, 16, num_sessions))
-    R_distances_array = np.zeros((4842, 15, num_sessions))
+    L_intensities_array = np.zeros((4842, 12, num_sessions))
+    L_distances_array = np.zeros((4842, 12, num_sessions))
+    R_intensities_array = np.zeros((4842, 12, num_sessions))
+    R_distances_array = np.zeros((4842, 12, num_sessions))
 
     e = 0
     for fold in os.listdir(datadir):
         sessions = os.listdir(os.path.join(datadir, fold))
+        sessions = [x for x in sessions if ".gii" in x]
         output_sessions = []
         for session in sessions:
             start = session.find(f"{fold}_") + len(f"{fold}_")
@@ -40,19 +41,24 @@ def load_data(datadir, hemis):
                 distances_path = os.path.join(
                     datadir,
                     fold,
-                    f"sub-{fold}_{session}_{hemi}_T1map_blur_distances.csv",
+                    f"sub-{fold}_{session}_{hemi}_T1map_surf-fsnative_dist.func.gii",
                 )
                 intensities_path = os.path.join(
                     datadir,
                     fold,
-                    f"sub-{fold}_{session}_{hemi}_T1map_blur_intensities.csv",
+                    f"sub-{fold}_{session}_{hemi}_T1map-surf-fsnative_NONgrad.func.gii",
                 )
-                distances = np.genfromtxt(
-                    distances_path, delimiter=",", skip_header=1
-                ).transpose()
-                intensities = np.genfromtxt(
-                    intensities_path, delimiter=",", skip_header=1
-                ).transpose()
+
+                distances = nib.load(distances_path).darrays[0].data
+                intensities = nib.load(intensities_path).darrays[0].data
+
+                distances = distances[:, :12]
+                # distances = np.genfromtxt(
+                #     distances_path, delimiter=",", skip_header=1
+                # ).transpose()
+                # intensities = np.genfromtxt(
+                #     intensities_path, delimiter=",", skip_header=1
+                # ).transpose()
                 if hemi == "L":
                     L_intensities_array[:, :, int(e)] = intensities
                     L_distances_array[:, :, int(e)] = distances
@@ -133,7 +139,7 @@ def reshape_distances(distances_array):
     distances_array_reshaped = np.zeros(
         (
             len(distances_array),
-            16,
+            12,
             distances_array.shape[2] if len(distances_array.shape) > 2 else 1,
         )
     )
