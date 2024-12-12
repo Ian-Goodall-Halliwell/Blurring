@@ -45,7 +45,7 @@ def load_data(datadir, hemis):
                 intensities_path = os.path.join(
                     datadir,
                     fold,
-                    f"sub-{fold}_{session}_{hemi}_T1map-surf-fsnative_NONgrad.func.gii",
+                    f"sub-{fold}_{session}_{hemi}_T1map_surf-fsnative_NONgrad.func.gii",
                 )
 
                 distances = nib.load(distances_path).darrays[0].data

@@ -172,20 +172,20 @@ def compute_blurring(
     #     f"{input_dir}/maps/{bids_id}_hemi-{hemi}_surf-fsnative_label-pial_{feat}.func.gii"
     # )
     pialSurfaceArr = load_gifti_data(
-        f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.surf.gii"
+        f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-midthickness.surf.gii"
     )
     subprocess.run(
         [
             os.path.join(workbench_path, "wb_command"),
             "-volume-to-surface-mapping",
             volumemap,
-            f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.surf.gii",
-            f"{tmp_dir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.func.gii",
+            f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-midthickness.surf.gii",
+            f"{tmp_dir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-midthickness.func.gii",
             "-trilinear",
         ]
     )
     pialDataArr = load_gifti_data(
-        f"{tmp_dir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.func.gii"
+        f"{tmp_dir}/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-midthickness.func.gii"
     )
     # wmBoundaryDataArr = load_gifti_data(
     #     f"{input_dir}/maps/{bids_id}_hemi-{hemi}_surf-fsnative_label-white_{feat}.func.gii"
@@ -211,12 +211,12 @@ def compute_blurring(
         [pialDataArr, pialSurfaceArr],
     ]
 
-    for ratio in [0.8, 0.6, 0.4, 0.2]:
+    for ratio in [0.75, 0.5, 0.25]:
         command_new = [
             os.path.join(workbench_path, "wb_command"),
             "-surface-cortex-layer",
             f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-white.surf.gii",
-            f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-pial.surf.gii",
+            f"{input_dir}/surf/{bids_id}_hemi-{hemi}_space-nativepro_surf-fsnative_label-midthickness.surf.gii",
             str(ratio),
             f"{workingdir}//swm//{bids_id}_{hemi}_cortex-{ratio}.surf.gii",
         ]
@@ -244,7 +244,7 @@ def compute_blurring(
 
     surfarr.append([wmBoundaryDataArr, wmBoundarySurfaceArr])
 
-    for surf in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]:
+    for surf in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]:
         subprocess.run(
             [
                 os.path.join(workbench_path, "wb_command"),
